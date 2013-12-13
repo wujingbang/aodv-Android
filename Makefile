@@ -3,8 +3,7 @@
 #FLAGS
 #DEBUG: show debug messages
 #NOMIPS: used for non-based mipsel systems
-ARCH=i386
-CROSS_COMPILE	= i686-android-linux-
+
 CC 		= $(CROSS_COMPILE)gcc
 AS		= $(CROSS_COMPILE)as
 LD		= $(CROSS_COMPILE)ld
