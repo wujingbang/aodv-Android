@@ -31,4 +31,23 @@ like:
 	
 the IP address is your device's IP.
 
+PLUS: Android has block the linux kernel package forwarding, you can use 
+
+	iptables –P FORWARD ACCEPT
+	
+to open that function.(untest)
+
+OR, you can change linux kernel source code:
+
+	ip_forward， /net/ipv4/ip_forward.c:55
+	
+	change
+	
+	return NF_HOOK(NFPROTO_IPV4, NF_INET_FORWARD, skb, skb->dev,
+		       rt->dst.dev, ip_forward_finish);
+
+	to
+	
+	return ip_forward_finish(skb);
+
 
