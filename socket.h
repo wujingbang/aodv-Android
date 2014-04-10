@@ -20,6 +20,8 @@ void close_sock(void);
 int local_broadcast(u_int8_t ttl, void *data, const size_t datalen);
 int send_message(u_int32_t dst_ip, u_int8_t ttl, void *data, const size_t datalen);
 int send_ett_probe(u_int32_t dst_ip, void *data1, const size_t datalen1, void *data2, const size_t datalen2);
-
+#ifdef DTN
+int send2dtn(void * data);
+#endif
 
 #endif

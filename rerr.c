@@ -56,6 +56,9 @@ int gen_rerr(u_int32_t brk_dst_ip) {
 					tmp_rerr->num_hops = 0;
 					tmp_rerr->dst_ip = tmp_route->dst_ip;
 					tmp_rerr->dst_id = htonl(tmp_route->dst_id);
+#ifdef DTN
+					tmp_rerr->last_avail_ip = g_mesh_ip;
+#endif
 					send_message(tmp_route->last_hop, NET_DIAMETER, tmp_rerr,
 							sizeof(rerr));
 					kfree(tmp_rerr);
@@ -87,14 +90,31 @@ int recv_rerr(task * tmp_packet) {
 	tmp_rerr = (rerr *) tmp_packet->data;
 	num_hops = tmp_rerr->num_hops+1;
 #ifdef DEBUG
-	printk("Recieved a route error from %s", inet_ntoa(tmp_packet->src_ip));
+	printk("Recieved a route error from %s\n", inet_ntoa(tmp_packet->src_ip));
 #endif
 
 	tmp_route
 			= find_aodv_route_by_id(tmp_rerr->dst_ip, ntohl(tmp_rerr->dst_id));
 
-	if (tmp_route && tmp_route->next_hop == tmp_packet->src_ip) {
+#ifdef DTN
 
+	extern int dtn_register;
+
+#include <linux/sched.h>
+//JL: Added kernel threads interface:
+#include <linux/kthread.h>
+	u_int32_t para[2];
+	para[0] = tmp_rerr->dst_ip;
+	para[1] = tmp_rerr->last_avail_ip;
+#ifdef DEBUG
+	printk("dtn_register: %d\n", dtn_register);
+#endif
+	if(dtn_register)
+//		kthread_run(&send2dtn, (void*)para, "send2dtn");
+		send2dtn((void*)para);//tmp_rerr->dst_ip, tmp_rerr->last_avail_ip);
+#endif
+	if (tmp_route && tmp_route->next_hop == tmp_packet->src_ip) {
+		//if there is any hop before me
 		if (!reply_to_rrer(tmp_route->src_ip, tmp_route->dst_ip)) {
 			if (tmp_route->state != INVALID) { //route with active traffic
 
@@ -111,6 +131,7 @@ int recv_rerr(task * tmp_packet) {
 			}
 
 		}
+
 		if (tmp_route->state != INVALID) {
 			expire_aodv_route(tmp_route);
 			expired_routes++;

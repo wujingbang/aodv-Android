@@ -67,7 +67,10 @@
 #include <net/icmp.h>
 #include <net/route.h>
 
+#define DTN
 //#define DEBUG 0
+#define DTNREGISTER		9999
+#define DTNPORT			10000
 #define AODVPORT		654
 #define TRUE			1
 #define FALSE 			0
@@ -309,6 +312,9 @@ typedef struct {
 	unsigned int dst_count :8;
 	u_int32_t dst_ip;
 	u_int32_t dst_id;
+#ifdef DTN
+	u_int32_t last_avail_ip;
+#endif
 
 } rerr;
 //

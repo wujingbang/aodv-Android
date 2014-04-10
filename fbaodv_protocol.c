@@ -40,6 +40,22 @@ unsigned int aodv_gateway;
 char g_aodv_dev[8];
 u_int32_t g_null_ip;
 
+#ifdef BLACKLIST
+	char * aodv_blacklist[10];
+	char * dtn_blacklist[10];
+	u_int32_t aodv_blacklist_ip[10];
+	u_int32_t dtn_blacklist_ip[10];
+	int aodv_blacksize = 0;
+	int dtn_blacksize = 0;
+	module_param_array(aodv_blacklist, charp, &aodv_blacksize, 0644);
+	module_param_array(dtn_blacklist, charp, &dtn_blacksize, 0644);
+#endif
+
+#ifdef DTN
+int dtn_register = 0;
+
+#endif
+
 static struct proc_dir_entry *aodv_dir, *route_table_proc, *neigh_proc,
 		*gw_proc, *timers_proc, *node_load_proc, *sources_proc,
 		*reliability_proc, *ett_proc,
@@ -145,6 +161,25 @@ static int __init init_fbaodv_module(void) {
 			return(-1);
 	}
 	
+#ifdef BLACKLIST
+	if (aodv_blacksize) {
+		printk("AODV BLACK LIST:\n");
+		int k;
+		for (k = 0; k < aodv_blacksize; k++) {
+			printk("           %s\n", aodv_blacklist[k]);
+			inet_aton(aodv_blacklist[k], &aodv_blacklist_ip[k]);
+		}
+	}
+	if (dtn_blacksize) {
+		printk("DTN BLACK LIST:\n");
+		int k;
+		for (k = 0; k < dtn_blacksize; k++) {
+			printk("           %s\n", dtn_blacklist[k]);
+			inet_aton(dtn_blacklist[k], &dtn_blacklist_ip[k]);
+		}
+	}
+#endif
+
 
 	init_aodv_route_table();
 	init_task_queue();

@@ -14,6 +14,11 @@ extern u_int32_t g_mesh_ip;
 extern u_int8_t g_routing_metric;
 extern aodv_neigh *aodv_neigh_list;
 extern aodv_dev *g_mesh_dev;
+#ifdef BLACKLIST
+	extern u_int32_t aodv_blacklist_ip[10];
+
+	extern int aodv_blacksize;
+#endif
 
 int count = 0;
 
@@ -162,6 +167,14 @@ int recv_hello(task * tmp_packet) {
 	tmp_hello_extension = (hello_extension *) ((void*)tmp_packet->data
 			+ sizeof(hello));
 
+#ifdef BLACKLIST
+	//block the aodv blacklist
+	int k = 0;
+	for(k=0; k<aodv_blacksize; k++) {
+		if (aodv_blacklist_ip[k] == tmp_packet->src_ip)
+			return 0;
+	}
+#endif
 	hello_orig = find_aodv_neigh(tmp_packet->src_ip);
 
 	if (hello_orig == NULL) {

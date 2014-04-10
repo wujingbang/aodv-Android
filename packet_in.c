@@ -11,6 +11,16 @@
 
 #include "packet_in.h"
 
+#ifdef DTN
+	extern int dtn_register;
+#endif
+#ifdef BLACKLIST
+	extern u_int32_t aodv_blacklist_ip[10];
+	extern u_int32_t dtn_blacklist_ip[10];
+	extern int aodv_blacksize;
+	extern int dtn_blacksize;
+#endif
+
 int valid_aodv_packet(int numbytes, int type, char *data, struct timeval tv) {
 
 	rerr *tmp_rerr;
@@ -132,6 +142,10 @@ unsigned int input_handler(unsigned int hooknum, struct sk_buff *skb,
 		const struct net_device *in, const struct net_device *out, int (*okfn) (struct sk_buff *)) {
 	struct timeval tv;
 	
+	u_int8_t aodv_type;
+	int start_point = sizeof(struct udphdr) + sizeof(struct iphdr);
+	aodv_type = (int) skb->data[start_point];
+
 	struct iphdr *ip = ip_hdr(skb);
 	struct in_device *tmp_indev = (struct in_device *) in->ip_ptr;
 
@@ -142,22 +156,41 @@ unsigned int input_handler(unsigned int hooknum, struct sk_buff *skb,
 		return NF_ACCEPT;
 	}
 
-#ifdef DEBUG
-	u_int8_t aodv_type;
-	int start_point = sizeof(struct udphdr) + sizeof(struct iphdr);
-	aodv_type = (int) skb->data[start_point];
 
 	char src[16];
 	char dst[16];
 	strcpy(src, inet_ntoa(ip->saddr));
 	strcpy(dst, inet_ntoa(ip->daddr));
+
+
+#ifdef DTN
+	static int t = 1;
+	//DTN register
+	if (t && !dtn_register && udp->dest == htons(DTNREGISTER)){
+		dtn_register = 1;
+		t = 0;
+		printk("*************DTN registered*************\n");
+	}
+#ifdef BLACKLIST
+	int k = 0;
+	if (udp->dest == htons(9556)) {
+		for(k=0; k<dtn_blacksize; k++) {
+			if (!strcmp("192.168.1.255",dst) && dtn_blacklist_ip[k] == ip->saddr) {
+				return NF_DROP;
+			}
+		}
+	}
+#endif
+
+#endif
+
+#ifdef DEBUG
 	if (ip->protocol == IPPROTO_ICMP) {
 		printk("input_handler: Recv a ICMP from %s to %s\n", src, dst);
 	} else if (aodv_type != HELLO_MESSAGE) {
 		printk("input_handler: Recv a %d Packet, from %s to %s\n",ip->protocol, src, dst);
 	}
 #endif
-
 	if (udp != NULL && ip->protocol == IPPROTO_UDP && skb->protocol == htons(ETH_P_IP) && udp->dest == htons(AODVPORT) && tmp_indev->ifa_list->ifa_address != ip->saddr) {
 	
 		do_gettimeofday(&tv); //MCC - capture the time of arrival needed for ett_probes
