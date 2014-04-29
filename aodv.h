@@ -69,12 +69,13 @@
 
 #define DTN
 //#define DEBUG 0
+#define CaiDebug                666
 #define DTNREGISTER		9999
 #define DTNPORT			10000
-#define AODVPORT		654
+#define AODVPORT		5002
 #define TRUE			1
 #define FALSE 			0
-
+#define BLACKLIST               111
 // See section 10 of the AODV draft
 // Times in milliseconds
 #define ACTIVE_ROUTE_TIMEOUT 	3000
