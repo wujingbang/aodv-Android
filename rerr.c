@@ -83,10 +83,21 @@ int gen_rerr(u_int32_t brk_dst_ip) {
 					//last DTN hop near the brk node
 					extern int dtn_register;
 					printk("dtn_register=%d;last_avail:%s\n",dtn_register,inet_ntoa(tmp_rerr->last_avail_ip));
+					tmp_rerr->src_ip = tmp_route->src_ip;
 					if(dtn_register==1)
 					{
 						tmp_rerr->last_avail_ip = g_mesh_ip;
 						printk("g_mesh_ip:%s\n",inet_ntoa(g_mesh_ip));
+						//notice DTN layer
+#include <linux/sched.h>
+//JL: Added kernel threads interface:
+#include <linux/kthread.h>
+						u_int32_t para[3];
+						para[0] = tmp_rerr->dst_ip;
+						para[1] = tmp_rerr->last_avail_ip;
+						para[2] = tmp_rerr->src_ip;
+						send2dtn((void*)para);
+						
 					}
 #endif
 
@@ -157,19 +168,24 @@ int recv_rerr(task * tmp_packet) {
 #ifdef DTN
 
 	extern int dtn_register;
+	int first_dtn=0;
 
 #include <linux/sched.h>
 //JL: Added kernel threads interface:
 #include <linux/kthread.h>
-	u_int32_t para[2];
+	u_int32_t para[3];
 	para[0] = tmp_rerr->dst_ip;
 	para[1] = tmp_rerr->last_avail_ip;
+	para[2] = tmp_rerr->src_ip;
 #ifdef CaiDebug
 	printk("dtn_register: %d;last_avail:%s\n", dtn_register,inet_ntoa(tmp_rerr->last_avail_ip));
 #endif
 	if(dtn_register==1){
 		if(para[1]==NULL)//current node is the nearest DTN node to brk link
+		{	
 			para[1] = g_mesh_ip;
+			first_dtn = 1;
+		}
 //		kthread_run(&send2dtn, (void*)para, "send2dtn");
 		send2dtn((void*)para);//tmp_rerr->dst_ip, tmp_rerr->last_avail_ip);
 	}
@@ -186,6 +202,15 @@ int recv_rerr(task * tmp_packet) {
 				tmp_rerr->num_hops = num_hops;
 				tmp_rerr->dst_ip = tmp_route->dst_ip;
 				tmp_rerr->dst_id = htonl(tmp_route->dst_id);
+
+#ifdef DTN
+				tmp_rerr->src_ip = tmp_route->src_ip;
+				if(dtn_register==1 && first_dtn==1)
+				{
+					tmp_rerr->last_avail_ip = g_mesh_ip;
+				}
+#endif
+				
 
 				send_message(tmp_route->last_hop, NET_DIAMETER, tmp_rerr,
 						sizeof(rerr));

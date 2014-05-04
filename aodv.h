@@ -76,6 +76,7 @@
 #define TRUE			1
 #define FALSE 			0
 #define BLACKLIST               111
+#define REPAIR			333
 // See section 10 of the AODV draft
 // Times in milliseconds
 #define ACTIVE_ROUTE_TIMEOUT 	3000
@@ -315,6 +316,7 @@ typedef struct {
 	u_int32_t dst_id;
 #ifdef DTN
 	u_int32_t last_avail_ip;
+	u_int32_t src_ip;
 #endif
 
 } rerr;
