@@ -29,20 +29,21 @@ int valid_aodv_packet(int numbytes, int type, char *data, struct timeval tv) {
 	hello *tmp_hello;
 	rreq *tmp_rreq;
 	rreq_st *tmp_strreq;
+	rcvp *tmp_rcvp;
 
 	s_probe *tmp_sprobe;
 	l_probe *tmp_lprobe;
 	ett_info *tmp_ett_info;
 
 	switch (type) {
-	
+
 	case ST_RREQ_MESSAGE:
 		tmp_strreq = (rreq_st *) data;
 		if (numbytes == sizeof(rreq_st)) {
 			return 1;
 		}
 		break;
-	
+
 	case RREP_MESSAGE:
 
 		tmp_rrep = (rrep *) data;
@@ -50,7 +51,7 @@ int valid_aodv_packet(int numbytes, int type, char *data, struct timeval tv) {
 			return 1;
 		}
 		break;
-		
+
 	case RERR_MESSAGE:
 		tmp_rerr = (rerr *) data;
 		if (numbytes == sizeof(rerr)) {
@@ -65,6 +66,13 @@ int valid_aodv_packet(int numbytes, int type, char *data, struct timeval tv) {
 			return 1;
 		}
 		break;
+
+    /****************Ìí¼ÓÀàÐÍRCVP_MESSAGE*******************/
+    case RCVP_MESSAGE:
+        tmp_rcvp = (rcvp *) data;
+        if(numbytes == sizeof(rcvp))
+        return 1;
+        break;
 
 	case ETT_S_MESSAGE: //ETT small message received
 		tmp_sprobe = (s_probe *) data;
@@ -89,8 +97,8 @@ int valid_aodv_packet(int numbytes, int type, char *data, struct timeval tv) {
 		if (numbytes == sizeof(rreq))
 			return 1;
 		break;
-		
-	
+
+
 	case ETT_INFO_MSG:
 		tmp_ett_info = (ett_info *) data;
 		if (numbytes == sizeof(ett_info))
@@ -115,8 +123,12 @@ int packet_in(struct sk_buff *packet, struct timeval tv) {
 
 	//get pointers to the important parts of the message
 	ip = ip_hdr(packet);
-	
+
 	aodv_type = (int) packet->data[start_point];
+#ifdef CaiDebug
+    if( aodv_type == RCVP_MESSAGE)
+        printk("It's a rcvp message\n");
+#endif
 #ifdef DEBUG
 	if ( aodv_type != HELLO_MESSAGE )
 		printk("packet_in: type: %d and of size %u from: %s\n", aodv_type, packet->len - start_point, inet_ntoa(ip->saddr));
@@ -141,7 +153,7 @@ extern int initialized;
 unsigned int input_handler(unsigned int hooknum, struct sk_buff *skb,
 		const struct net_device *in, const struct net_device *out, int (*okfn) (struct sk_buff *)) {
 	struct timeval tv;
-	
+
 	u_int8_t aodv_type;
 	int start_point = sizeof(struct udphdr) + sizeof(struct iphdr);
 	aodv_type = (int) skb->data[start_point];
@@ -151,7 +163,7 @@ unsigned int input_handler(unsigned int hooknum, struct sk_buff *skb,
 
 	void *p = (uint32_t *) ip + ip->ihl;
 	struct udphdr *udp = (struct udphdr *) p;
-	
+
 	if (!initialized) { // this is required otherwise kernel calls this function without insmod completing the module loading process.
 		return NF_ACCEPT;
 	}
@@ -192,17 +204,17 @@ unsigned int input_handler(unsigned int hooknum, struct sk_buff *skb,
 	}
 #endif
 	if (udp != NULL && ip->protocol == IPPROTO_UDP && skb->protocol == htons(ETH_P_IP) && udp->dest == htons(AODVPORT) && tmp_indev->ifa_list->ifa_address != ip->saddr) {
-	
+
 		do_gettimeofday(&tv); //MCC - capture the time of arrival needed for ett_probes
 		return packet_in((skb), tv);
-			
-	} 
+
+	}
 
 #ifdef DEBUG
 	if (aodv_type != HELLO_MESSAGE)
 		printk("input_handler: input without process.\n");
 #endif
-			
+
 	return NF_ACCEPT;
 
 }
