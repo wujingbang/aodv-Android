@@ -14,6 +14,8 @@ extern u_int32_t g_mesh_ip;
 extern u_int8_t g_routing_metric;
 extern aodv_neigh *aodv_neigh_list;
 extern aodv_dev *g_mesh_dev;
+///////////brk_list////////
+extern brk_link *brk_list;
 #ifdef BLACKLIST
 	extern u_int32_t aodv_blacklist_ip[10];
 
@@ -31,7 +33,7 @@ void update_neigh_load(aodv_neigh *neigh, aodv_neigh_2h *neigh_2h,
 			neigh->load_metric.load_seq = load_seq;
 		} else if (load_seq < neigh->load_metric.load_seq
 				&& neigh->load_metric.load_seq-load_seq > 64000) {
-			//sequence number has been reinitialized 
+			//sequence number has been reinitialized
 			neigh->load_metric.load = load;
 			neigh->load_metric.load_seq = load_seq;
 		}
@@ -55,18 +57,18 @@ void update_neightx(aodv_neigh *neigh, u_int32_t neightx) {
 	int i=0;
 	int first_empty = -1;
 	u_int32_t position;
-	
+
 	for (i=0; i<NEIGH_TABLESIZE; i++) {
 		position = neigh->load_metric.neigh_tx[i];
 		if (position == neightx) {
 			first_empty = i;
 			break;
-		} 
+		}
 		else if (position == 0 && first_empty == -1)
 			first_empty = i;
 	}
 	neigh->load_metric.neigh_tx[first_empty]=neightx;
-	
+
 }
 
 int send_hello(helloext_struct *total_ext, int num_neigh) {
@@ -108,7 +110,7 @@ int send_hello(helloext_struct *total_ext, int num_neigh) {
 
 	local_broadcast(1, data, hello_size);
 	kfree(data);
-	//random jitter 
+	//random jitter
 	get_random_bytes(&rand, sizeof (rand));
 	jitter = (u_int64_t)(rand%NODE_TRAVERSAL_TIME); //a number between 0 and 50usecs
 	insert_timer_simple(TASK_HELLO, HELLO_INTERVAL+jitter, g_mesh_ip);
@@ -162,7 +164,7 @@ int recv_hello(task * tmp_packet) {
 	int i;
 	u_int8_t load = 0;
 	u_int16_t load_seq = 0;
-	
+
 	tmp_hello= (hello *)tmp_packet->data;
 	tmp_hello_extension = (hello_extension *) ((void*)tmp_packet->data
 			+ sizeof(hello));
@@ -187,7 +189,7 @@ int recv_hello(task * tmp_packet) {
 			printk("MOVING NEIGHBOR_2HOPS TO NEIGHBOUR_1HOP: %s\n",
 					inet_ntoa(tmp_packet->src_ip));
 
-		} else 
+		} else
 			printk("NEW NEIGHBOR_1HOP DETECTED: %s\n",
 					inet_ntoa(tmp_packet->src_ip));
 
@@ -198,10 +200,76 @@ int recv_hello(task * tmp_packet) {
 #endif
 			return -1;
 		}
-		
+
+
+		/*********************************************
+            添加了通路处理部分，再检测到新邻居时，
+            扫描断路表，并对相应条目发起路由发现
+		**********************************************/
+		//printk("Start to manage brk_list in hello.c!\n");
+		brk_link *tmp_link;
+		tmp_link = brk_list;
+		unsigned char tos;
+		//默认速率为1Mbps类型，可能需要进行调整
+
+		tos = 0x02;
+
+		if(tmp_link==NULL){//空，无需操作，返回
+		    printk("The brk list is empty!\n");
+		}
+		else{
+		    while(tmp_link!=NULL){//遍历断路表，发起路由发现
+#ifdef CaiDebug
+char s[20];
+char d[20];
+//char l[20];
+u_int8_t state;
+strcpy(s,inet_ntoa(tmp_link->src_ip));
+strcpy(d,inet_ntoa(tmp_link->dst_ip));
+state = tmp_link->state;
+printk("tmp_link is : %s:%s:%d\n",s,d,state);
+#endif
+		        if(tmp_link->state!=INVALID){//该断路未失效
+		            if(tmp_link->dst_ip == tmp_packet->src_ip){//the new neighor is the right dst
+
+				//because gen_rcvp will remove the current tmp_link, so get next
+				//link sould be manage in this segment,the same in else
+				//tmp_link = tmp_link->next;
+				//
+                        	gen_rcvp(tmp_packet->src_ip);
+				//gen_rcvp will manage all link which has a same dst,so just break
+				break;
+#ifdef CaiDebug
+    printk("the new neighbor is just the dst of brk_link,gen rcvp to it\n");
+#endif
+		            }
+		            else{
+				if(gen_rreq(g_mesh_ip, tmp_link->dst_ip,tos)){
+
+#ifdef CaiDebug
+		                char src[20];
+		                char dst[20];
+		                strcpy(src,inet_ntoa(tmp_link->src_ip));
+		                strcpy(dst,inet_ntoa(tmp_link->dst_ip));
+		                printk("Try recovery the link from %s to %s\n",src,dst);
+
+				tmp_link = tmp_link->next;
+#endif
+		            	}//gen rreq
+			    }//else
+		        }//not invalid
+
+		        //tmp_link = tmp_link->next;
+		    }//while
+		}
+
+
+		/**********************************************/
+
+
 		hello_orig->load_metric.load = load;
 		hello_orig->load_metric.load_seq = load_seq;
-			
+
 	}
 
 	//Update neighbor timelife
@@ -278,12 +346,12 @@ void compute_etx() {
 		else {
 			tmp_neigh->etx.recv_etx = tmp_neigh->etx.count;
 			tmp_neigh->etx.count = 0;
-			
+
 		if (tmp_neigh->etx.recv_etx  > 10)
 			tmp_neigh->etx.recv_etx = 10;
 		if (tmp_neigh->etx.send_etx  > 10)
 			tmp_neigh->etx.send_etx = 10;
-				
+
 			tmp_neigh->etx_metric = tmp_neigh->etx.recv_etx
 					*tmp_neigh->etx.send_etx; //new etx
 
