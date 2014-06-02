@@ -67,20 +67,22 @@
 #include <net/icmp.h>
 #include <net/route.h>
 
-#define DTN
+#define DTN                    11223
 //#define DEBUG 0
+#define CaiDebug                666
 #define DTNREGISTER		9999
 #define DTNPORT			10000
-#define AODVPORT		654
+#define AODVPORT		5002
 #define TRUE			1
 #define FALSE 			0
-
+#define BLACKLIST               111
+#define REPAIR			333
 // See section 10 of the AODV draft
 // Times in milliseconds
-#define ACTIVE_ROUTE_TIMEOUT 	3000
-#define ALLOWED_HELLO_LOSS 	10 //MCC - Changed to increment the possibility of having a bad ETX metric
+#define ACTIVE_ROUTE_TIMEOUT 	4800//3000
+#define ALLOWED_HELLO_LOSS 	3 //MCC - Changed to increment the possibility of having a bad ETX metric
 #define BLACKLIST_TIMEOUT 	RREQ_RETRIES * NET_TRAVERSAL_TIME
-#define DELETE_PERIOD         ALLOWED_HELLO_LOSS * HELLO_INTERVAL
+#define DELETE_PERIOD         ALLOWED_HELLO_LOSS * HELLO_INTERVAL //ALLOWED_HELLO_LOSS * HELLO_INTERVAL
 #define HELLO_INTERVAL        1000
 #define LOCAL_ADD_TTL         2
 #define MAX_REPAIR_TTL        0.3 * NET_DIAMETER
@@ -314,6 +316,7 @@ typedef struct {
 	u_int32_t dst_id;
 #ifdef DTN
 	u_int32_t last_avail_ip;
+	u_int32_t src_ip;
 #endif
 
 } rerr;
