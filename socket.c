@@ -171,17 +171,18 @@ static int connect_to_addr(struct socket *sock, u_int32_t dstip)//get aim ip and
  * @dst_ip:断路的目的地
  * @last_avail_ip:
  */
+/*
 int send2dtn(void * data){
 
 	u_int32_t dst_ip = ((u_int32_t *)data)[0];
 	u_int32_t last_avail_ip = ((u_int32_t *)data)[1];
 	int datalen = 12;
-#ifdef DEBUG
+//#ifdef DEBUG
 	char s1[16],s2[16];
 	strcpy(s1, inet_ntoa(dst_ip));
 	strcpy(s2, inet_ntoa(last_avail_ip));
 	printk("send RRER info to DTN, dst: %s, last_avail: %s\n", s1, s2);
-#endif
+//#endif
 
 
 
@@ -240,37 +241,186 @@ int send2dtn(void * data){
     }
     set_fs(oldfs);
     return 0;
-    /*
-
-    struct socket *sock;
-    int err = 0;
-
-    err = sock_create_kern(PF_INET, SOCK_DGRAM, IPPROTO_UDP, &sock);
-    if (err < 0) {
-        printk("UDP create sock err, err=%d\n", err);
-        return -1;
-    }
-    sock->sk->sk_reuse = 1;
-
-    err = bind_to_device(sock, "lo");
-    if (err < 0) {
-    	printk("Bind to %s err, err=%d\n", "lo", err);
-    	return -1;
-	}
-
-    err = connect_to_addr(sock, local_ip);
-    if (err < 0) {
-        printk("sock connect err, err=%d\n", err);
-        return -1;
-    }
-
-    struct msghdr msg = {.msg_flags = MSG_DONTWAIT|MSG_NOSIGNAL};
-    struct kvec iov;
-    iov.iov_base = (void*)(&data2Dtn);
-    iov.iov_len = datalen;
-    int ret = kernel_sendmsg(sock, &msg, &iov, 1, datalen);
-    return 0;
+}
 */
+/*
+//overwrite the above function to a function with three paras
+int send2dtn(void * data){
+
+	u_int32_t dst_ip = ((u_int32_t *)data)[0];
+	u_int32_t last_avail_ip = ((u_int32_t *)data)[1];
+	u_int32_t src_ip = ((u_int32_t *)data)[2];
+	int datalen = 18;
+//#ifdef DEBUG
+	char s1[16],s2[16],s3[16];
+	strcpy(s1, inet_ntoa(dst_ip));
+	strcpy(s2, inet_ntoa(last_avail_ip));
+	strcpy(s3, inet_ntoa(src_ip));
+	printk("send RRER info to DTN, dst: %s, last_avail: %s,src: %s\n", s1, s2, s3);
+//#endif
+
+
+
+    struct msghdr msg;
+    struct iovec iov;
+    aodv_dev *tmp_dev;
+    mm_segment_t oldfs;
+    u_int32_t space;
+    int len;
+
+    aodv_neigh *tmp_neigh;
+
+
+
+    memset(&sin, 0, sizeof(sin));
+    sin.sin_family = AF_INET;
+
+    sin.sin_addr.s_addr = g_mesh_ip;
+    sin.sin_port = htons((unsigned short) DTNPORT);
+
+
+    //define the message we are going to be sending out
+    msg.msg_name = (void *) &(sin);
+    msg.msg_namelen = sizeof(sin);
+    msg.msg_iov = &iov;
+
+    msg.msg_iovlen = 1;
+    msg.msg_control = NULL;
+    msg.msg_controllen = 0;
+    msg.msg_flags = MSG_DONTWAIT | MSG_NOSIGNAL;
+
+    msg.msg_iov->iov_len = (__kernel_size_t) datalen;
+    msg.msg_iov->iov_base = data;
+#ifdef DEBUG
+
+    printk("%x\n", ((u_int32_t *)data)[0]);
+    printk("%x\n", ((u_int32_t *)data)[1]);
+    printk("%x\n", ((u_int32_t *)data)[2]);
+#endif
+	tmp_dev = g_mesh_dev;
+
+
+    if (tmp_dev == NULL)
+    {
+        printk("Error sending! Unable to find interface!\n");
+
+        return 0;
+    }
+
+    space = sock_wspace(tmp_dev->sock->sk);
+
+
+    if (space < datalen)
+    {
+
+        printk("Space: %d, Data: %d \n", space, (int)datalen);
+        return 0;
+    }
+
+
+    oldfs = get_fs();
+    set_fs(KERNEL_DS);
+
+    len = sock_sendmsg(tmp_dev->sock, &msg,(size_t) datalen);
+
+    if (len < 0)
+    {
+        printk("Error sending! err no: %d, Dst: %s\n", len, inet_ntoa(dst_ip));
+
+    }
+    set_fs(oldfs);
+    return 0;
+}*/
+
+//Cai Bingying : overwrite the above function to a function with four paras
+//it's used in sending rerr and rcvp to DTN
+int send2dtn(void * data){
+
+    	u_int32_t src_ip = ((u_int32_t *)data)[0];
+	u_int32_t dst_ip = ((u_int32_t *)data)[1];
+	u_int32_t last_avail_ip = ((u_int32_t *)data)[2];
+	u_int32_t type = ((u_int32_t *)data)[3];
+	//int datalen = 18;
+	int datalen = 24;
+//#ifdef DEBUG
+	char s1[16],s2[16],s3[16];
+	strcpy(s1, inet_ntoa(dst_ip));
+	strcpy(s2, inet_ntoa(last_avail_ip));
+	strcpy(s3, inet_ntoa(src_ip));
+	printk("send RRER or RCVP info to DTN, dst: %s, last_avail: %s,src: %s,type:%s\n", s1, s2, s3,inet_ntoa(type));
+//#endif
+
+
+
+    struct msghdr msg;
+    struct iovec iov;
+    aodv_dev *tmp_dev;
+    mm_segment_t oldfs;
+    u_int32_t space;
+    int len;
+
+    aodv_neigh *tmp_neigh;
+
+
+
+    memset(&sin, 0, sizeof(sin));
+    sin.sin_family = AF_INET;
+
+    sin.sin_addr.s_addr = g_mesh_ip;
+    sin.sin_port = htons((unsigned short) DTNPORT);
+
+
+    //define the message we are going to be sending out
+    msg.msg_name = (void *) &(sin);
+    msg.msg_namelen = sizeof(sin);
+    msg.msg_iov = &iov;
+
+    msg.msg_iovlen = 1;
+    msg.msg_control = NULL;
+    msg.msg_controllen = 0;
+    msg.msg_flags = MSG_DONTWAIT | MSG_NOSIGNAL;
+
+    msg.msg_iov->iov_len = (__kernel_size_t) datalen;
+    msg.msg_iov->iov_base = data;
+#ifdef DEBUG
+
+    printk("%x\n", ((u_int32_t *)data)[0]);
+    printk("%x\n", ((u_int32_t *)data)[1]);
+    printk("%x\n", ((u_int32_t *)data)[2]);
+#endif
+	tmp_dev = g_mesh_dev;
+
+
+    if (tmp_dev == NULL)
+    {
+        printk("Error sending! Unable to find interface!\n");
+
+        return 0;
+    }
+
+    space = sock_wspace(tmp_dev->sock->sk);
+
+
+    if (space < datalen)
+    {
+
+        printk("Space: %d, Data: %d \n", space, (int)datalen);
+        return 0;
+    }
+
+
+    oldfs = get_fs();
+    set_fs(KERNEL_DS);
+
+    len = sock_sendmsg(tmp_dev->sock, &msg,(size_t) datalen);
+
+    if (len < 0)
+    {
+        printk("Error sending! err no: %d, Dst: %s\n", len, inet_ntoa(dst_ip));
+
+    }
+    set_fs(oldfs);
+    return 0;
 }
 #endif
 
