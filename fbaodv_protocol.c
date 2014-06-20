@@ -20,6 +20,15 @@ u_int8_t g_aodv_gateway;
 u_int8_t g_routing_metric;
 u_int32_t g_fixed_rate;
 
+////////////////////
+//dtn hello ip
+#ifdef DTN_HELLO
+u_int32_t dtn_hello_ip;
+u_int32_t longitude;
+u_int32_t latitude;
+#endif
+
+
 // KR: 08/23/05
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Miguel Catalan Cid");
@@ -27,6 +36,8 @@ MODULE_DESCRIPTION("A AODV ad-hoc routing kernel module: Flow-based and WCIM rou
 
 extern struct timer_list aodv_timer;
 extern struct aodv_route *aodv_route_table;
+////////////brk_list/////////////
+extern struct brk_link *brk_list;
 
 struct nf_hook_ops input_filter;
 struct nf_hook_ops output_filter;
@@ -77,6 +88,16 @@ module_param(nominal_rate,uint,0);
 static int __init init_fbaodv_module(void) {
 	char *tmp_str = NULL;
 	inet_aton("0.0.0.0", &g_null_ip);
+
+#ifdef DTN_HELLO
+	inet_aton("192.168.2.2",&dtn_hello_ip);
+	printk("%s",inet_ntoa(dtn_hello_ip));
+	longitude = 0;
+	latitude = 0;
+#endif
+
+
+
 
 	if (mesh_dev==NULL)
 	{
@@ -181,7 +202,13 @@ static int __init init_fbaodv_module(void) {
 #endif
 
 
+
 	init_aodv_route_table();
+#ifdef RECOVERYPATH
+        ///////////brk_list//////////////
+	init_brk_list();
+#endif
+
 	init_task_queue();
 	init_timer_queue();
 	init_aodv_neigh_list();
@@ -207,6 +234,13 @@ static int __init init_fbaodv_module(void) {
 	insert_timer_simple(TASK_HELLO, HELLO_INTERVAL,g_mesh_ip );
 	insert_timer_simple(TASK_GW_CLEANUP, ACTIVE_GWROUTE_TIMEOUT, g_mesh_ip);
 	insert_timer_simple(TASK_CLEANUP, HELLO_INTERVAL+HELLO_INTERVAL/2, g_mesh_ip);
+
+#ifdef CaiDebug
+	//printk("-------Test DTN Hello---------\n");
+	//if(!insert_timer_simple(TASK_DTN_HELLO, 80*HELLO_INTERVAL, g_mesh_ip))
+		//printk("-------Test DTN Hello%d---------\n",TASK_DTN_HELLO);
+#endif
+
 	update_timer_queue();
 
 	aodv_dir = proc_mkdir("fbaodv",NULL);
