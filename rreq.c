@@ -26,7 +26,7 @@ int recv_rreq(task * tmp_packet) {
 	rreq *tmp_rreq = NULL;
 	aodv_neigh *tmp_neigh;
 	int iam_destination = 0;
-	
+
 	tmp_rreq = tmp_packet->data;
 	convert_rreq_to_host(tmp_rreq);
 
@@ -35,7 +35,7 @@ int recv_rreq(task * tmp_packet) {
 
 	if (tmp_packet->ttl <= 1 && !iam_destination) //If i'm destination, i can receive it
 	{
-#ifdef DEBUG
+#ifdef 	CaiDebug
 		printk("AODV TTL for RREQ from: %s expired\n", inet_ntoa(tmp_rreq->src_ip));
 #endif
 		return -ETIMEDOUT;
@@ -64,7 +64,7 @@ int recv_rreq(task * tmp_packet) {
 #endif
 		return 1;
 	}
-	
+
 	if (g_aodv_gateway && tmp_rreq->dst_ip == g_null_ip && tmp_rreq->gateway != g_mesh_ip) {
 #ifdef DEBUG
 		printk("I'm not the gateway of this source - I cannot apply as an intermediate node to its default route\n");
@@ -113,6 +113,30 @@ int recv_rreq(task * tmp_packet) {
 			}
 			return 0;
 		}
+		
+#ifdef DTN_HELLO
+		//manage dttl
+		//if it's a rreq for looking for DTN neighbors
+		//the dst would not be any ip of local net
+		extern dtn_register;
+		if(dtn_register){
+			if(tmp_rreq->dttl>=1){
+				u_int32_t para[4];
+				para[0] = tmp_rreq->src_ip;
+				para[1] = (u_int32_t)tmp_rreq->tos;
+				para[2] = NULL;
+				para[3] = NULL;
+				send2dtn((void*)para,DTN_LOCATION_PORT);
+				#ifdef CaiDebug
+					printk("query location in rreq\n");
+				#endif				
+				//gen_rrep(tmp_rreq->src_ip,tmp_rreq->dst_ip,tmp_rreq->tos);
+				tmp_rreq->dttl = tmp_rreq->dttl - 1;
+			}	
+		}
+#endif
+
+
 
 		//else forwarding RREQ
 		convert_rreq_to_network(tmp_rreq);
@@ -156,10 +180,10 @@ int resend_rreq(task * tmp_packet) {
 	out_rreq->dst_ip = tmp_packet->dst_ip;
 	if (out_rreq->dst_ip == g_null_ip)
 			out_rreq->gateway = g_default_gw;
-		
+
 		else
 			out_rreq->gateway = g_null_ip;
-	
+
 	out_rreq->src_ip = tmp_packet->src_ip;
 	out_rreq->type = RREQ_MESSAGE;
 	out_rreq->num_hops = 0;
@@ -172,6 +196,10 @@ int resend_rreq(task * tmp_packet) {
 
 	out_rreq->path_metric = 0;
 	out_rreq->tos = tmp_packet->tos;
+
+#ifdef DTN_HELLO
+	out_rreq->dttl = DTTL;
+#endif
 
 	convert_rreq_to_network(out_rreq);
 	local_broadcast(out_ttl, out_rreq, sizeof(rreq));
@@ -197,12 +225,25 @@ int gen_rreq(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 	u_int8_t out_ttl;
 	flow_type *new_flow;
 
+printk("-----------------gen rreq--------------\n");
 //	new_flow = find_flow_type(tos);
 //
 //	if (new_flow == NULL) {
 //		printk("new_flow is NULL\n");
 //		return 0;
 //	}dst_ip
+
+	
+#ifdef DTN_HELLO
+	extern u_int32_t dtn_hello_ip;
+	//inet_aton("192.168.2.2",&spec_ip);
+	u_int8_t dttl=0;
+	if(dst_ip == dtn_hello_ip)
+	{	
+		dttl = DTTL;
+		printk("It's a DTN hello!\n");
+	}
+#endif
 
 	if (find_timer(src_ip, dst_ip, tos, TASK_RESEND_RREQ)) {
 			printk("don't flood the net with new rreq, wait...\n");
@@ -213,7 +254,7 @@ int gen_rreq(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 		char src[16];
 		char dst[16];
 		strcpy(src, inet_ntoa(src_ip));
-		strcpy(dst, inet_ntoa(dst_ip));		
+		strcpy(dst, inet_ntoa(dst_ip));
 		printk("gen_rreq: Generates a RREQ from %s to %s!\n", src, dst);
 	}
 #endif
@@ -229,7 +270,6 @@ int gen_rreq(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 	/* Get our own sequence number */
 	g_local_route->dst_id = g_local_route->dst_id + 1;
 	out_rreq->dst_id = g_local_route->dst_id;
-
 	out_rreq->dst_ip = dst_ip;
 	if (out_rreq->dst_ip == g_null_ip)
 		out_rreq->gateway = g_default_gw;
@@ -237,7 +277,7 @@ int gen_rreq(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 		out_rreq->gateway = g_null_ip;
 
 //wujingbang
-/*	
+/*
 	if (g_default_gw == g_null_ip){
 #ifdef DEBUG
 		printk("There isn't a default Gateway! - External traffic will be dropped until an active gateway is discovered\n");
@@ -257,17 +297,23 @@ int gen_rreq(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 	out_rreq->g = 0;
 	out_rreq->path_metric = 0;
 	out_rreq->tos = tos;
+#ifdef DTN_HELLO
+	out_rreq->dttl = dttl;
+#endif
 
 	convert_rreq_to_network(out_rreq);
 	local_broadcast(out_ttl, out_rreq, sizeof(rreq));
 
 	insert_timer_directional(TASK_RESEND_RREQ, 0, RREQ_RETRIES, src_ip,
 			dst_ip, tos);
-
 	update_timer_queue();
 
+#ifdef CaiDebug
+printk("end in rreq\n");
+#endif
+
 	kfree(out_rreq);
-	
+
 	return 1;
 
 }
