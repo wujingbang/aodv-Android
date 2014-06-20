@@ -67,12 +67,21 @@
 #include <net/icmp.h>
 #include <net/route.h>
 
+
+#define DTN_LOCATION_PORT 	10003
+#define AODV_LOCATION_PORT	10004         
+#define TASK_DTN_HELLO        121
+#define DTN_HELLO
+//remove it when test end,in aodv.h, aove_thread.c , task_queue.c
+//#define RECOVERYPATH 
 #define DTN
 //#define DEBUG 0
 #define CaiDebug                666
 #define extention               667
 #define DTNREGISTER		9999
 #define DTNPORT			10000
+#define GET_DTN_HELLO           10001
+#define RE_DTN_HELLO		10002
 #define AODVPORT		5002
 #define TRUE			1
 #define FALSE 			0
@@ -80,9 +89,9 @@
 #define REPAIR			333
 // See section 10 of the AODV draft
 // Times in milliseconds
-#define ACTIVE_ROUTE_TIMEOUT 	3000
+#define ACTIVE_ROUTE_TIMEOUT 	4800
 #define BRK_LINK_TIMEOUT        2 * ACTIVE_ROUTE_TIMEOUT
-#define ALLOWED_HELLO_LOSS 	10 //MCC - Changed to increment the possibility of having a bad ETX metric
+#define ALLOWED_HELLO_LOSS 	3 //MCC - Changed to increment the possibility of having a bad ETX metric
 #define BLACKLIST_TIMEOUT 	RREQ_RETRIES * NET_TRAVERSAL_TIME
 #define DELETE_PERIOD         ALLOWED_HELLO_LOSS * HELLO_INTERVAL
 #define HELLO_INTERVAL        1000
@@ -103,6 +112,9 @@
 #define TTL_INCREMENT 		 2
 #define TTL_THRESHOLD         7
 #define TTL_VALUE             3
+
+////////DTTL means DTN TTL//////////
+#define DTTL			5
 
 //ST Gateway Definitions
 #define ST_INTERVAL           10000
@@ -238,6 +250,10 @@ typedef struct {
 	u_int32_t dst_id;
 	u_int32_t path_metric;
 
+#ifdef DTN_HELLO
+	u_int8_t dttl;//used to find DTN neighbor
+#endif
+
 } rreq_st;
 //
 
@@ -271,6 +287,10 @@ typedef struct {
 	u_int32_t dst_id;
 	u_int32_t path_metric;
 
+#ifdef DTN_HELLO
+	u_int8_t dttl;//used to find DTN neighbor
+#endif
+
 } rreq;
 //
 
@@ -300,6 +320,12 @@ typedef struct {
 	u_int32_t gateway;
 	u_int32_t path_metric;
 	u_int32_t src_id;
+
+#ifdef DTN_HELLO
+	u_int8_t dttl;//used to find DTN neighbor
+	u_int32_t x;
+	u_int32_t y;
+#endif
 
 } rrep;
 //
@@ -372,6 +398,8 @@ typedef struct {
 } hello;
 //
 
+
+#ifdef RECOVERYPATH
 //////////////////////////////
 //Recovery Path Message		    //
 //////////////////////////////
@@ -392,9 +420,9 @@ typedef struct {
 	u_int32_t dst_ip;
 	u_int32_t dst_id;
 	u_int32_t src_ip;
-//#ifdef DTN
+#ifdef DTN
 	u_int32_t last_avail_ip;
-//#endif
+#endif
 
 } rcvp;
 //
@@ -419,7 +447,7 @@ struct _brk_link {
 };
 typedef struct _brk_link brk_link;
 //
-
+#endif
 
 //MCC - ETT Metric Implementation Messages
 //Stuffing of 24 bytes - Necessary to form the probe packets
@@ -505,6 +533,9 @@ struct _task {
 
 	struct _task *next;
 	struct _task *prev;
+
+//control task
+	struct _task *prev_control;
 
 };
 typedef struct _task task;
@@ -683,7 +714,12 @@ struct services {
 #include "timer_queue.h"
 #include "utils.h"
 #include "tos.h"
+
+//#ifdef RECOVERYPATH
+
 #include "brk_list.h"
 #include "rcvp.h"
+
+//#endif
 
 #endif
