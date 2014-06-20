@@ -29,7 +29,10 @@ int valid_aodv_packet(int numbytes, int type, char *data, struct timeval tv) {
 	hello *tmp_hello;
 	rreq *tmp_rreq;
 	rreq_st *tmp_strreq;
+
+#ifdef RECOVERYPATH
 	rcvp *tmp_rcvp;
+#endif
 
 	s_probe *tmp_sprobe;
 	l_probe *tmp_lprobe;
@@ -68,11 +71,13 @@ int valid_aodv_packet(int numbytes, int type, char *data, struct timeval tv) {
 		break;
 
     /****************Ìí¼ÓÀàÐÍRCVP_MESSAGE*******************/
-    case RCVP_MESSAGE:
-        tmp_rcvp = (rcvp *) data;
-        if(numbytes == sizeof(rcvp))
-        return 1;
-        break;
+	#ifdef RECOVERYPATH
+    	case RCVP_MESSAGE:
+        	tmp_rcvp = (rcvp *) data;
+        	if(numbytes == sizeof(rcvp))
+       			return 1;
+        	break;
+	#endif
 
 	case ETT_S_MESSAGE: //ETT small message received
 		tmp_sprobe = (s_probe *) data;
@@ -173,7 +178,7 @@ unsigned int input_handler(unsigned int hooknum, struct sk_buff *skb,
 	char dst[16];
 	strcpy(src, inet_ntoa(ip->saddr));
 	strcpy(dst, inet_ntoa(ip->daddr));
-
+ 
 
 #ifdef DTN
 	static int t = 1;
@@ -183,6 +188,42 @@ unsigned int input_handler(unsigned int hooknum, struct sk_buff *skb,
 		t = 0;
 		printk("*************DTN registered*************\n");
 	}
+	
+	extern u_int32_t g_mesh_ip;	
+	if( dtn_register && udp->dest == htons(GET_DTN_HELLO) ){
+		insert_timer_simple(TASK_DTN_HELLO, 0, g_mesh_ip);
+		update_timer_queue();
+		printk("*************GOT DTN HELLO TASK*************\n");
+	}
+
+	if( dtn_register && udp->dest == htons(AODV_LOCATION_PORT)){
+		extern u_int32_t dtn_hello_ip;
+		extern u_int32_t longitude;
+		extern u_int32_t latitude;
+		void *loc_data;
+		loc_data = &(skb->data[start_point]);
+printk("*********1**********\n");
+		u_int32_t src_ip = ((u_int32_t *)loc_data)[0];
+printk("*********2**********\n");
+		u_int32_t tos = ((u_int32_t *)loc_data)[1];
+printk("*********3**********\n");
+		u_int32_t x = ((u_int32_t *)loc_data)[2];
+printk("*********4**********\n");
+		u_int32_t y = ((u_int32_t *)loc_data)[3];
+		longitude = x;
+		latitude = y;
+		/*u_int32_t src_ip = ((u_int32_t *)skb->data)[0];
+		u_int32_t tos = ((u_int32_t *)skb->data)[1];
+		u_int32_t x = ((u_int32_t *)skb->data)[2];
+		u_int32_t y = ((u_int32_t *)skb->data)[3];*/
+		printk("*********GOT Location Info%s  %ld  %ld**********\n",inet_ntoa(src_ip),ntohl(x),ntohl(y));
+			
+		gen_rrep(src_ip,dtn_hello_ip,(unsigned char)tos);
+printk("*********5**********\n");
+		
+		
+		
+}
 #ifdef BLACKLIST
 	int k = 0;
 	if (udp->dest == htons(9556)) {
