@@ -90,7 +90,7 @@
 // See section 10 of the AODV draft
 // Times in milliseconds
 #define ACTIVE_ROUTE_TIMEOUT 	4800
-#define BRK_LINK_TIMEOUT        2*ACTIVE_ROUTE_TIMEOUT  //2 * ACTIVE_ROUTE_TIMEOUT
+#define BRK_LINK_TIMEOUT        60000  //2 * ACTIVE_ROUTE_TIMEOUT
 #define ALLOWED_HELLO_LOSS 	3 //MCC - Changed to increment the possibility of having a bad ETX metric
 #define BLACKLIST_TIMEOUT 	RREQ_RETRIES * NET_TRAVERSAL_TIME
 #define DELETE_PERIOD         ALLOWED_HELLO_LOSS * HELLO_INTERVAL
