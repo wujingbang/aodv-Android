@@ -198,8 +198,16 @@ int resend_rreq(task * tmp_packet) {
 	out_rreq->tos = tmp_packet->tos;
 
 #ifdef DTN_HELLO
-	out_rreq->dttl = DTTL;
-#endif
+		out_rreq->dttl = 0;
+#endif 
+
+/*
+#ifdef DTN_HELLO
+	extern u_int32_t dtn_hello_ip;
+	if(tmp_packet->dst_ip == dtn_hello_ip)
+		out_rreq->dttl = DTTL;
+#endif 
+*/
 
 	convert_rreq_to_network(out_rreq);
 	local_broadcast(out_ttl, out_rreq, sizeof(rreq));
@@ -225,7 +233,7 @@ int gen_rreq(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 	u_int8_t out_ttl;
 	flow_type *new_flow;
 
-printk("-----------------gen rreq--------------\n");
+//printk("-----------------gen rreq--------------\n");
 //	new_flow = find_flow_type(tos);
 //
 //	if (new_flow == NULL) {
@@ -236,7 +244,6 @@ printk("-----------------gen rreq--------------\n");
 	
 #ifdef DTN_HELLO
 	extern u_int32_t dtn_hello_ip;
-	//inet_aton("192.168.2.2",&spec_ip);
 	u_int8_t dttl=0;
 	if(dst_ip == dtn_hello_ip)
 	{	
