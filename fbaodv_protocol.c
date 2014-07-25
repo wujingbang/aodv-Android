@@ -90,7 +90,8 @@ static int __init init_fbaodv_module(void) {
 	inet_aton("0.0.0.0", &g_null_ip);
 
 #ifdef DTN_HELLO
-	inet_aton("192.168.2.2",&dtn_hello_ip);
+	//inet_aton("192.168.2.2",&dtn_hello_ip);
+	inet_aton("127.127.127.127",&dtn_hello_ip);
 	printk("%s",inet_ntoa(dtn_hello_ip));
 	longitude = 0;
 	latitude = 0;
