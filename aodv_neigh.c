@@ -187,9 +187,9 @@ aodv_neigh *create_aodv_neigh(u_int32_t ip) {
 	int i;
 	
 	if ((new_neigh = kmalloc(sizeof(aodv_neigh), GFP_ATOMIC)) == NULL) {
-//#ifdef DEBUG
+#ifdef DEBUG
 		printk("NEIGHBOR_LIST: Can't allocate new entry\n");
-//#endif
+#endif
 		return NULL;
 	}
 
@@ -200,17 +200,17 @@ aodv_neigh *create_aodv_neigh(u_int32_t ip) {
 	}
 
 	if (tmp_neigh && (tmp_neigh->ip == ip)) {
-//#ifdef DEBUG
+#ifdef DEBUG
 		printk("AODV_NEIGH: Creating a duplicate neighbor\n");
-//#endif
+#endif
 		kfree(new_neigh);
 		return NULL;
 	}
 	
 	if (!route_aodv_neigh(ip)){
-//#ifdef DEBUG
+#ifdef DEBUG
 		printk("AODV_NEIGH: Error in kernel route creation\n");
-//#endif
+#endif
 		kfree(new_neigh);
 		return NULL;
 	}
