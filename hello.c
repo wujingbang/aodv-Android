@@ -198,9 +198,9 @@ int recv_hello(task * tmp_packet) {
 
 		hello_orig = create_aodv_neigh(tmp_packet->src_ip);
 		if (!hello_orig) {
-//#ifdef DEBUG
+#ifdef DEBUG
 			printk("Error creating neighbor: %s\n", inet_ntoa(tmp_packet->src_ip));
-//#endif
+#endif
 			return -1;
 		}
 
@@ -225,16 +225,7 @@ int recv_hello(task * tmp_packet) {
 		}
 		else{
 		    while(tmp_link!=NULL){//遍历断路表，发起路由发现
-#ifdef CaiDebug
-char s[20];
-char d[20];
-//char l[20];
-u_int8_t state;
-strcpy(s,inet_ntoa(tmp_link->src_ip));
-strcpy(d,inet_ntoa(tmp_link->dst_ip));
-state = tmp_link->state;
-printk("tmp_link is : %s:%s:%d\n",s,d,state);
-#endif
+
 		        if(tmp_link->state!=INVALID && !is_overlapped_with_route(tmp_link) ){//该断路未失效
 		            if(tmp_link->dst_ip == tmp_packet->src_ip){//the new neighor is the right dst
 
@@ -277,14 +268,6 @@ printk("tmp_link is : %s:%s:%d\n",s,d,state);
 		aodv_route *tmp_route;
 		tmp_route = first_aodv_route();
 		while(tmp_route && tmp_route->state != INVALID){
-#ifdef CaiDebug
-char s[20];
-char d[20];
-strcpy(s,inet_ntoa(tmp_route->src_ip));
-strcpy(d,inet_ntoa(tmp_route->dst_ip));
-
-printk("----------%s   %s-----------\n",s,d);
-#endif
 			
 			if( (tmp_route->src_ip != tmp_route->dst_ip)
 					&&(tmp_route->src_ip !=g_mesh_ip) ){//not self route

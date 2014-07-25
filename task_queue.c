@@ -168,11 +168,6 @@ int queue_aodv_task(task * new_entry) {
 
 	task_q = new_entry;
 
-
-//#ifdef CaiDebug
-	//if(new_entry->type==TASK_DTN_HELLO)
-		//printk("-----------%d---------------\n",new_entry->type);
-//#endif
 	//add the new task already
 	if(is_control_task(new_entry->type)){
 		if(sub_q==NULL && sub_end==NULL){//the sub queue is empty
@@ -184,9 +179,6 @@ int queue_aodv_task(task * new_entry) {
 			sub_q->prev_control = new_entry;
 			sub_q = new_entry;
 		}
-#ifdef CaiDebug
-			//printk("-----------%d:126---------------\n",new_entry->type);
-#endif
 	}
 
 	//unlock table
@@ -210,9 +202,6 @@ task *get_task() {
 	if(sub_end){
 
 		tmp_task = sub_end;
-		//#ifdef CaiDebug
-			//printk("-----------type=%d---------------\n",tmp_task->type);
-		//#endif
 		
 		if(sub_end == sub_q){//one element
 			if( (task_end==task_q) && (task_end==sub_end) ){
@@ -249,27 +238,14 @@ task *get_task() {
 			}
 			
 			sub_end = sub_end->prev_control;
-			
-			//#ifdef CaiDebug
-			///printk("-----------type=%d---------------\n",tmp_task->type);
-			//#endif
-
-			
+				
 		}//if-else
 		
 		queue_unlock();
-
-//#ifdef CaiDebug
-		//if(tmp_task->type==TASK_DTN_HELLO)
-		//printk("-----------%d---------------\n",tmp_task->type);
-//#endif
 		
 		return tmp_task;
 	}//if sub_end
 	
-	#ifdef CaiDebug
-			//printk("-----------data task---------------\n");
-		#endif
 	//if no control task ,get the end of the queue
 	if (task_end) {
 		tmp_task = task_end;
@@ -280,9 +256,7 @@ task *get_task() {
 			task_end = task_end->prev;
 		}
 		queue_unlock();
-		#ifdef CaiDebug
-			//printk("-----------data task:%d---------------\n",tmp_task);
-		#endif
+
 		return tmp_task;
 	}
 	if (task_q != NULL) {

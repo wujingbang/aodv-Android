@@ -204,9 +204,6 @@ int insert_timer_simple(u_int8_t task_type, u_int64_t delay, u_int32_t ip) {
 		return -ENOMEM;
 	}
 
-//#ifdef CaiDebug
-	//printk("---------------%d:121--------------\n",task_type);
-//#endif
 	new_entry->src_ip = ip;
 	new_entry->dst_ip = ip;
 	new_entry->tos = NO_TOS;
@@ -316,6 +313,7 @@ void delete_timer(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos,
 	task *tmp_task;
 	task *prev_task;
 	task *dead_task = NULL;
+
 
 	//printk("deleting timer: %s  type: %u", inet_ntoa(id), type);
 	timer_write_lock();

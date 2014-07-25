@@ -140,11 +140,13 @@ strcpy(d,inet_ntoa(tmp_rrep->dst_ip));
 #endif
 		brk_link *tmp_link;
 		tmp_link = find_first_brk_link_with_dst(tmp_rrep->dst_ip);//rreq的源则为路由发现的目的地，也为断路表的目的地址
-		if(tmp_link==NULL)   printk("no brk links to this dst\n");
-		else{
+		if(tmp_link==NULL){   
 #ifdef CaiDebug
-			printk("start to gen rcvp\n");
+printk("no brk links to this dst\n");
 #endif
+		}
+		else{
+
 		  	gen_rcvp(tmp_rrep->dst_ip);
 		}
 		/*****************************************************/
@@ -164,7 +166,6 @@ strcpy(d,inet_ntoa(tmp_rrep->dst_ip));
 		aodv_route *new_recv;
 		aodv_route *new_send;
 
-	//if(dtn_register){
 		if( (tmp_rrep->dttl!=NULL) && (tmp_rrep->dttl>0) ){
 			//it's a DTN hello rrep
 			recv_route = find_aodv_route(dtn_hello_ip,tmp_rrep->src_ip,tmp_rrep->tos);

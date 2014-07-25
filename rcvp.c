@@ -193,24 +193,6 @@ int recv_rcvp(task *tmp_packet){
             new_rcvp->last_avail_ip = tmp_link->last_avail_ip;
             new_rcvp->type = RCVP_MESSAGE;
 
-#ifdef CaiDebug
-            char rcvp_dst[20];
-            char rcvp_src[20];
-            char rcvp_lasta[20];
-            char brk_dst[20];
-            char brk_src[20];
-            char brk_lasta[20];
-            strcpy(rcvp_dst,inet_ntoa(tmp_rcvp->dst_ip));
-            strcpy(rcvp_src,inet_ntoa(tmp_rcvp->src_ip));
-            strcpy(rcvp_lasta,inet_ntoa(tmp_rcvp->last_avail_ip));
-            strcpy(brk_dst,inet_ntoa(tmp_link->dst_ip));
-            strcpy(brk_src,inet_ntoa(tmp_link->src_ip));
-            strcpy(brk_lasta,inet_ntoa(tmp_link->last_avail_ip));
-
-            printk("tmp_rcvp VS tmp_link : %s-%s, %s-%s, %s-%s\n",rcvp_dst,brk_dst,rcvp_src,brk_src,rcvp_lasta,brk_lasta);
-#endif
-
-
 
         send_message(tmp_link->last_hop, NET_DIAMETER, new_rcvp,sizeof(rcvp));
 	kfree(new_rcvp);
