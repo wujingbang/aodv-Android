@@ -39,6 +39,9 @@ int rreq_aodv_route(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos,
 		aodv_neigh *next_hop, u_int8_t metric, u_int32_t dst_id,
 		struct net_device *dev, u_int32_t path_metric);
 int rrep_aodv_route(aodv_route *tmp_route);
+#ifdef RECOVERYPATH
+int is_overlapped_with_route(brk_link *tmp_link);
+#endif
 
 extern int sysctl(int *__name, int __nlen, void *__oldval, size_t *__oldlenp,
 		void *__newval, size_t __newlen);

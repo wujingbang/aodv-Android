@@ -337,7 +337,7 @@ int send2dtn(void * data){
 int send2dtn(void * data,unsigned short port){
 
 	int datalen = 24;
-	printk("send to DTN\n");
+	//printk("send to DTN\n");
 
 
     	u_int32_t src_ip = ((u_int32_t *)data)[0];
@@ -426,6 +426,7 @@ int send2dtn(void * data,unsigned short port){
 
     }
     set_fs(oldfs);
+
     return 0;
 }
 

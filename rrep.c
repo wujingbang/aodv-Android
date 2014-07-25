@@ -142,7 +142,9 @@ strcpy(d,inet_ntoa(tmp_rrep->dst_ip));
 		tmp_link = find_first_brk_link_with_dst(tmp_rrep->dst_ip);//rreq的源则为路由发现的目的地，也为断路表的目的地址
 		if(tmp_link==NULL)   printk("no brk links to this dst\n");
 		else{
+#ifdef CaiDebug
 			printk("start to gen rcvp\n");
+#endif
 		  	gen_rcvp(tmp_rrep->dst_ip);
 		}
 		/*****************************************************/
@@ -163,7 +165,7 @@ strcpy(d,inet_ntoa(tmp_rrep->dst_ip));
 		aodv_route *new_send;
 
 	//if(dtn_register){
-		if(tmp_rrep->dttl>0){
+		if( (tmp_rrep->dttl!=NULL) && (tmp_rrep->dttl>0) ){
 			//it's a DTN hello rrep
 			recv_route = find_aodv_route(dtn_hello_ip,tmp_rrep->src_ip,tmp_rrep->tos);
 			if(recv_route){
@@ -198,7 +200,7 @@ strcpy(d,inet_ntoa(tmp_rrep->dst_ip));
 	}
 #endif
 			
-		}
+		}//dttl
 	
 #endif
 #endif
@@ -265,6 +267,7 @@ strcpy(d,inet_ntoa(tmp_rrep->dst_ip));
 int gen_rrep(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 	aodv_route *src_route;
 	rrep *tmp_rrep;
+
 #ifdef DEBUG
 	char src[16];
 	char dst[16];
@@ -281,7 +284,6 @@ int gen_rrep(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 
 	src_route = find_aodv_route(dst_ip, src_ip, tos);
 	/* Get the source and destination IP address from the RREQ */
-
 	if (!src_route) { //symmetric
 #ifdef DEBUG
 			printk("RREP: No route to Source! src: %s\n", inet_ntoa(src_ip));
@@ -297,7 +299,6 @@ int gen_rrep(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 #endif
 		return 0;
 	}
-
 
 //it's a dtn neighbor,gen "special rrep" for telling src
 #ifdef DTN_HELLO
@@ -310,9 +311,10 @@ int gen_rrep(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 	u_int32_t new_dst_ip;
 	u_int8_t dttl=0;
 	aodv_route *new_route;
-	//inet_aton("192.168.2.2",&spec_ip);
 	if(dtn_register){
+#ifdef CaiDebug
 	printk("The src ip is %s\n",inet_ntoa(src_ip));
+#endif
 		if(dst_ip==dtn_hello_ip){//it's a dtn neighbor,gen "special rrep" for telling src
 			//change the dst_ip to local ip
 			new_dst_ip = g_mesh_ip;
@@ -324,10 +326,12 @@ int gen_rrep(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 			//do not remove the old one ,there may be some other neighbor to use it
 			g_local_route->dst_id = g_local_route->dst_id + 1;
 			new_route = create_aodv_route(g_mesh_ip, src_ip,tos,g_local_route->dst_id);
+
+			if(new_route==NULL) return 0;
 			new_route->next_hop = src_route->next_hop;
 			new_route->last_hop = NULL;
 			//update the src_route's lifetime
-			src_route->lifetime = getcurrtime() + DELETE_PERIOD;
+			//src_route->lifetime = getcurrtime() + DELETE_PERIOD;
 			//let the new_route be the src_route,&create rrep route
 			src_route = new_route;
 
@@ -365,7 +369,6 @@ int gen_rrep(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 	//Update the route to REPLIED state
 	rrep_aodv_route(src_route);
 	src_route->last_hop = src_route->src_ip;//dst_ip;
-
 #ifdef DTN_HELLO
 	tmp_rrep->dttl = dttl;
 	tmp_rrep->x = longitude;
@@ -375,122 +378,8 @@ int gen_rrep(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 
 	convert_rrep_to_network(tmp_rrep);
 	send_message(src_route->next_hop, NET_DIAMETER, tmp_rrep, sizeof(rrep));
-
 	kfree(tmp_rrep);
 	return 1;
 
 }
-/*
-#ifdef DTN_HELLO
-int gen_dtn_hello_rrep(u_int32_t src_ip,unsigned char tos,u_int32_t x,u_int32_t y) {
-	aodv_route *src_route;
-	rrep *tmp_rrep;
-	
-	extern u_int32_t dtn_hello_ip;
-	u_int32_t dst_ip;
-	dst_ip = dtn_hello_ip;
-
-#ifdef CaiDebug
-	printk("I'm generating a dtn hellp rrep\n");
-#endif
-	if ((tmp_rrep = (rrep *) kmalloc(sizeof(rrep), GFP_ATOMIC)) == NULL) {
-#ifdef CaiDebug
-		printk("Can't allocate new rrep\n");
-#endif
-		return 0;
-	}
-
-	src_route = find_aodv_route(dst_ip, src_ip, tos);
-	/* Get the source and destination IP address from the RREQ */
-/*
-	if (!src_route) { //symmetric
-#ifdef DEBUG
-			printk("RREP: No route to Source! src: %s\n", inet_ntoa(src_ip));
-#endif
-
-			return 1;
-	}
-
-
-	if ((tmp_rrep = (rrep *) kmalloc(sizeof(rrep), GFP_ATOMIC)) == NULL) {
-#ifdef DEBUG
-		printk("Can't allocate new rrep\n");
-#endif
-		return 0;
-	}
-
-
-//it's a dtn neighbor,gen "special rrep" for telling src
-	extern int dtn_register;
-	u_int32_t new_dst_ip;
-	u_int8_t dttl=0;
-	aodv_route *new_route;
-	if(dtn_register){
-	printk("The src ip is %s\n",inet_ntoa(src_ip));
-		if(dst_ip==dtn_hello_ip){//it's a dtn neighbor,gen "special rrep" for telling src
-			//change the dst_ip to local ip
-			new_dst_ip = g_mesh_ip;
-			dttl = DTTL;
-		
-			//add a new one from src to local ip
-			//do not remove the old one ,there may be some other neighbor to use it
-			g_local_route->dst_id = g_local_route->dst_id + 1;
-			new_route = create_aodv_route(g_mesh_ip, src_ip,tos,g_local_route->dst_id);
-			new_route->next_hop = src_route->next_hop;
-			new_route->last_hop = NULL;
-			//update the src_route's lifetime
-			src_route->lifetime = getcurrtime() + DELETE_PERIOD;
-			//let the new_route be the src_route,&create rrep route
-			src_route = new_route;
-
-#ifdef CaiDebug
-			char src[20];
-			char dst[20];
-			char nex[20];
-			strcpy(src,inet_ntoa(new_route->src_ip));
-			strcpy(dst,inet_ntoa(new_route->dst_ip));
-			strcpy(nex,inet_ntoa(new_route->next_hop));
-			printk("---------src:%s  dst:%s  nex:%s----------\n",src,dst,nex);
-#endif
-
-		}
-	}
-
-#endif
-	
-
-	tmp_rrep->type = RREP_MESSAGE;
-	tmp_rrep->a = 0;
-	tmp_rrep->reserved1 = 0;
-	tmp_rrep->src_ip = src_route->dst_ip;
-	tmp_rrep->dst_ip = src_route->src_ip;//dst_ip;
-	g_local_route->dst_id = g_local_route->dst_id + 1;
-	tmp_rrep->dst_id = g_local_route->dst_id;
-	tmp_rrep->num_hops = 0;
-	tmp_rrep->src_id = src_route->dst_id;
-	tmp_rrep->tos = tos;
-	tmp_rrep->q=0;
-	tmp_rrep->path_metric = src_route->path_metric;
-
-
-
-	//Update the route to REPLIED state
-	rrep_aodv_route(src_route);
-	src_route->last_hop = src_route->src_ip;//dst_ip;
-
-#ifdef DTN_HELLO
-	tmp_rrep->dttl = dttl;
-#endif
-
-
-	convert_rrep_to_network(tmp_rrep);
-	send_message(src_route->next_hop, NET_DIAMETER, tmp_rrep, sizeof(rrep));
-
-	kfree(tmp_rrep);
-	return 1;
-
-}
-
-#endif
-*/
 

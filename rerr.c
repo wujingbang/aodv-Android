@@ -31,12 +31,13 @@ int gen_rerr(u_int32_t brk_dst_ip) {
 	rerr *tmp_rerr;
 	int expired_routes = 0;
 
-	printk("----------------in gen rerr(%s)------------------\n",inet_ntoa(brk_dst_ip));
+	//printk("----------------in gen rerr(%s)------------------\n",inet_ntoa(brk_dst_ip));
 
 
 	//找到第一条aodv路由
 	tmp_route = first_aodv_route();
 
+/*
 #ifdef CaiDebug
 //test
 	if(tmp_route==NULL)
@@ -44,12 +45,13 @@ int gen_rerr(u_int32_t brk_dst_ip) {
 	else
 		printk("tmp_route->state is %s\n",inet_ntoa(tmp_route->state));
 #endif
+*/
 
 	//go through list
 	//遍历所有下一跳为brk_dst_ip的路由条目，并给该节点发送rerr或无效化该路由
 	while (tmp_route != NULL) {
 
-		printk("tmp_route->next_hop is %s\n",inet_ntoa(tmp_route->next_hop));
+		//printk("tmp_route->next_hop is %s\n",inet_ntoa(tmp_route->next_hop));
 		if ((tmp_route->next_hop == brk_dst_ip) && (!tmp_route->self_route)&& (!tmp_route->neigh_route)){
 
 			if (!reply_to_rrer(tmp_route->src_ip, tmp_route->dst_ip)) { //i'm source of the route, don't send the rerr
@@ -76,12 +78,12 @@ int gen_rerr(u_int32_t brk_dst_ip) {
 					//last DTN hop near the brk node
 					extern int dtn_register;
 					tmp_rerr->last_avail_ip = NULL;
-					printk("dtn_register=%d;last_avail:%s\n",dtn_register,inet_ntoa(tmp_rerr->last_avail_ip));
+					//printk("dtn_register=%d;last_avail:%s\n",dtn_register,inet_ntoa(tmp_rerr->last_avail_ip));
 					tmp_rerr->src_ip = tmp_route->src_ip;
 					if(dtn_register==1)
 					{
 						tmp_rerr->last_avail_ip = g_mesh_ip;
-			        printk("last_avail_ip:%s\n",inet_ntoa(tmp_rerr->last_avail_ip));
+			        //printk("last_avail_ip:%s\n",inet_ntoa(tmp_rerr->last_avail_ip));
 						//notice DTN layer
 #include <linux/sched.h>
 //JL: Added kernel threads interface:
@@ -94,7 +96,7 @@ int gen_rerr(u_int32_t brk_dst_ip) {
 						//类型处理
 						para[3] = (u_int32_t)tmp_rerr->type;
 						//
-						send2dtn((void*)para);
+						send2dtn((void*)para,DTNPORT);
 
 					}
 					else tmp_rerr->last_avail_ip = NULL;
@@ -117,10 +119,12 @@ strcpy(last,inet_ntoa(tmp_route->last_hop));
                     		send_message(tmp_route->last_hop, NET_DIAMETER, tmp_rerr,sizeof(rerr));
                      kfree(tmp_rerr);
 
+#ifdef RECOVERYPATH
                     /****************************************************
                         加入断路表处理，每当产生一个新的rerr包时，也
                         新建一个brk_list的条目
                     *****************************************************/
+
                     brk_link *tmp_link;
                     u_int32_t lastavail=NULL;
 #ifdef DTN
@@ -154,12 +158,14 @@ strcpy(last,inet_ntoa(tmp_route->last_hop));
                         flush_brk_list();
                     }
                     /******************************************************************/
+#endif
 
 
 				}//route is not invalid
 
 
 			}//not the source of the route
+#ifdef RECOVERYPATH
 			else{		    
 				/****************************************************         					*****************************************************/
 #ifdef DTN
@@ -183,7 +189,7 @@ strcpy(last,inet_ntoa(tmp_route->last_hop));
 						//类型处理
 						para[3] = (u_int32_t)RERR_MESSAGE;
 						//
-						send2dtn((void*)para);
+						send2dtn((void*)para,DTNPORT);
 
 					}
 #endif
@@ -212,6 +218,7 @@ printk("new brk link %s:%s:%s:%s\n",s,d,l,la);
 				}                    
 				/******************************************************************/
 			}//the source
+#endif
 
 			if (tmp_route->state != INVALID){
 				expire_aodv_route(tmp_route);
@@ -233,6 +240,7 @@ printk("new brk link %s:%s:%s:%s\n",s,d,l,la);
 	}
 	if (g_routing_metric == WCIM && expired_routes != 0)
 	update_my_load();
+
 
 	return 0;
 }
@@ -277,7 +285,7 @@ int recv_rerr(task * tmp_packet) {
 			first_dtn = 1;
 		}
 //		kthread_run(&send2dtn, (void*)para, "send2dtn");
-		send2dtn((void*)para);//tmp_rerr->dst_ip, tmp_rerr->last_avail_ip);
+		send2dtn((void*)para,DTNPORT);//tmp_rerr->dst_ip, tmp_rerr->last_avail_ip);
 	}
 
 #endif
@@ -324,6 +332,7 @@ int recv_rerr(task * tmp_packet) {
 	printk("--------------------------------------------\n");
 #endif
 
+#ifdef RECOVERYPATH
                     /****************************************************
                         加入断路表处理，每当产生一个新的rerr包时，也
                         新建一个brk_list的条目
@@ -356,6 +365,7 @@ int recv_rerr(task * tmp_packet) {
                         flush_brk_list();
                     }
                     /******************************************************************/
+#endif
 
 
 
@@ -363,6 +373,7 @@ int recv_rerr(task * tmp_packet) {
 			}
 
 		}//not the source
+#ifdef RECOVERYPATH
 		else{
 		    /****************************************************
                         加入断路表处理，每当产生一个新的rerr包时，也
@@ -408,6 +419,7 @@ int recv_rerr(task * tmp_packet) {
                     }
                     /******************************************************************/
 		}//the source
+#endif
 
 		if (tmp_route->state != INVALID) {
 			expire_aodv_route(tmp_route);

@@ -46,6 +46,7 @@ unsigned int output_handler(unsigned int hooknum, struct sk_buff *skb,
 
 	if (is_internal(ip->daddr))
 		destination = ip->daddr;
+
 	
 	if (is_internal(ip->saddr))
 		source = ip->saddr;
@@ -71,6 +72,7 @@ unsigned int output_handler(unsigned int hooknum, struct sk_buff *skb,
 	if ((tmp_route == NULL) || (tmp_route->state == INVALID)) {
 		if (source == g_mesh_ip || (source == g_null_ip && g_aodv_gateway)) {
 			if (gen_rreq(source, destination, ip->tos)){
+				//printk("the tos is %s in packet_out.c\n");
 				printk("NF_QUEUE1\n");
 				return NF_QUEUE;
 			}

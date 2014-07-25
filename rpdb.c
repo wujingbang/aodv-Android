@@ -185,16 +185,15 @@ int rpdb_route(unsigned char type, int rt_table, unsigned char tos,
 	struct socket *rt_socket;
 
 //#ifdef AODV_SIGNALLING
-#ifdef DEBUG
+//#ifdef DEBUG
 	char src[20];
 	char dst[20];
 	char nex[20];
 	strcpy(src, inet_ntoa(ip_src));
 	strcpy(dst, inet_ntoa(ip_dst));
 	strcpy(nex, inet_ntoa(ip_gw));
-	printk("RPDB: Adding or deleting a route %s to %s via %s\n", src, dst, nex);
-#endif
-
+	printk("RPDB: Adding or deleting a route %s to %s via %s,type is %c\n", src, dst, nex,type);
+//#endif
 	error = sock_create(AF_NETLINK, SOCK_DGRAM, NETLINK_ROUTE, &rt_socket);
 	if (error < 0) {
 		printk("Error during creation of route socket; terminating, %d\n",
