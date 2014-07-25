@@ -208,8 +208,13 @@ int flush_aodv_route_table() {
 									error);
 
 					}
-					if (tmp_entry->num_routes <= 0)
+					//if (tmp_entry->num_routes <= 0)
+						//delete_src_list_entry(tmp_route->src_ip);
+					/*CaiBingying:When the src_list_entry is local node,do not delete it 							however for it having a self route any time,delete it may 							cause failure of new neighbors setting up*/
+					if ((tmp_entry->num_routes <= 0) && (tmp_entry->ip!=g_mesh_ip))
 						delete_src_list_entry(tmp_route->src_ip);
+					else if((tmp_entry->num_routes <= 0) && (tmp_entry->ip==g_mesh_ip))
+						tmp_entry->num_routes = 1;
 
 				}
 
@@ -450,6 +455,7 @@ int rrep_aodv_route(aodv_route *rep_route){
 			rep_route->tos, rep_route->src_ip, rep_route->dst_ip,
 			rep_route->next_hop, rep_route->dev->index,
 			rep_route->num_hops);
+	
 	if (error < 0) {
 		 				printk(
 		 						"Error sending with rtnetlink - Delete Route - err no: %d\n",
@@ -533,6 +539,7 @@ aodv_route *find_aodv_route_by_id(u_int32_t dst_ip, u_int32_t dst_id) {
 	route_read_unlock();
 	return NULL;
 }
+
 
 int read_route_table_proc(char *buffer, char **buffer_location, off_t offset,
 		int buffer_length, int *eof, void *data) {
