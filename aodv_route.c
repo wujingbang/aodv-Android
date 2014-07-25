@@ -540,6 +540,37 @@ aodv_route *find_aodv_route_by_id(u_int32_t dst_ip, u_int32_t dst_id) {
 	return NULL;
 }
 
+#ifdef RECOVERYPATH
+int is_overlapped_with_route(brk_link *tmp_link) {
+
+	aodv_route *tmp_route;
+	/*lock table */
+	route_read_lock(); //to avoid conflicts in packet_out.c (uncontrolled interruption)
+
+	tmp_route = aodv_route_table;
+
+	while ((tmp_route != NULL) && (tmp_route->dst_ip < tmp_link->last_avail_ip)) { //serching GW_IP (sorted by dst_ip)
+		tmp_route = tmp_route->next;
+	}
+
+	if ((tmp_route == NULL) || (tmp_route->dst_ip != tmp_link->last_avail_ip)) { //not found!
+		route_read_unlock();
+		return 0;
+	}
+
+	else {
+		while ((tmp_route != NULL) && (tmp_route->dst_ip == tmp_link->last_avail_ip)) {
+			if ( tmp_route->src_ip == tmp_link->src_ip ) {
+				route_read_unlock();
+				return 1;
+			}
+			tmp_route = tmp_route->next;
+		}
+	}
+	route_read_unlock();
+	return 0;
+}
+#endif
 
 int read_route_table_proc(char *buffer, char **buffer_location, off_t offset,
 		int buffer_length, int *eof, void *data) {

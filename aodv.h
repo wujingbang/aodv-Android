@@ -73,10 +73,10 @@
 #define TASK_DTN_HELLO        121
 #define DTN_HELLO
 //remove it when test end,in aodv.h, aove_thread.c , task_queue.c
-//#define RECOVERYPATH 
+#define RECOVERYPATH 
 #define DTN
 //#define DEBUG 0
-#define CaiDebug                666
+//#define CaiDebug                666
 #define extention               667
 #define DTNREGISTER		9999
 #define DTNPORT			10000
@@ -90,7 +90,7 @@
 // See section 10 of the AODV draft
 // Times in milliseconds
 #define ACTIVE_ROUTE_TIMEOUT 	4800
-#define BRK_LINK_TIMEOUT        2 * ACTIVE_ROUTE_TIMEOUT
+#define BRK_LINK_TIMEOUT        60000  //2 * ACTIVE_ROUTE_TIMEOUT
 #define ALLOWED_HELLO_LOSS 	3 //MCC - Changed to increment the possibility of having a bad ETX metric
 #define BLACKLIST_TIMEOUT 	RREQ_RETRIES * NET_TRAVERSAL_TIME
 #define DELETE_PERIOD         ALLOWED_HELLO_LOSS * HELLO_INTERVAL
@@ -197,6 +197,8 @@
 //EX-AODV
 #define RCVP_MESSAGE    122
 #define TASK_RECV_RCVP  122
+#define RRDP_MESSAGE    123
+#define TASK_RECV_RRDP  123
 
 //ST-AODV
 #define TASK_ST             106
@@ -426,6 +428,27 @@ typedef struct {
 
 } rcvp;
 //
+//Route Redirection Packet
+typedef struct {
+
+	u_int8_t type;
+	u_int8_t num_hops;
+#ifdef __BIG_ENDIAN_BITFIELD
+	unsigned int n:1;
+	unsigned int reserved:7;
+#elif defined __LITTLE_ENDIAN_BITFIELD
+	unsigned int reserved :7;
+	unsigned int n :1;
+#else
+	//#error "Please fix <asm/byteorder.h>"
+#endif
+	unsigned int dst_count :8;
+	u_int32_t dst_ip;
+	//u_int32_t dst_id;	
+	u_int32_t src_ip;
+	unsigned char tos;
+} rrdp;
+
 //Break Link Entry
 struct _brk_link {
 

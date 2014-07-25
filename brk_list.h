@@ -5,6 +5,7 @@
     copyright            : (C) 2014 by Cai Bingying
     email                :
  ***************************************************************************/
+//#ifdef RECOVERYPATH
 
 #ifndef BRK_LIST_H
 #define BRK_LIST_H
@@ -13,7 +14,7 @@
 
 
 //find first brk entry
-brk_link *first_brk_link();
+brk_link *first_brk_link(void);
 
 //initiate the brk list--empty
 void init_brk_list(void);
@@ -30,9 +31,8 @@ brk_link *find_first_brk_link_with_dst(u_int32_t dst_ip);
 //find brk link by src & dst -- 寻找指定的断路条目
 brk_link *find_brk_link(u_int32_t src_ip, u_int32_t dst_ip);
 
-
 //clean up the brk list -- 此功能保留，brk_list的清空应无需与内核交互
-int cleanup_brk_list();
+int cleanup_brk_list(void);
 
 //创建新的断路条目
 brk_link *create_brk_link(u_int32_t src_ip, u_int32_t dst_ip, u_int32_t lasthop, u_int32_t lastavail);
@@ -41,7 +41,10 @@ brk_link *create_brk_link(u_int32_t src_ip, u_int32_t dst_ip, u_int32_t lasthop,
 //插入新的断路条目，并先按dst排序
 void insert_brk_link(brk_link * new_link);
 
-int flush_brk_list();
+int flush_brk_list(void);
+
+//int is_overlapped_with_brk_link(aodv_route *tmp_route);
 
 #endif
+//#endif
 

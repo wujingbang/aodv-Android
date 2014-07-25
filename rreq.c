@@ -126,10 +126,7 @@ int recv_rreq(task * tmp_packet) {
 				para[1] = (u_int32_t)tmp_rreq->tos;
 				para[2] = NULL;
 				para[3] = NULL;
-				send2dtn((void*)para,DTN_LOCATION_PORT);
-				#ifdef CaiDebug
-					printk("query location in rreq\n");
-				#endif				
+				send2dtn((void*)para,DTN_LOCATION_PORT);			
 				//gen_rrep(tmp_rreq->src_ip,tmp_rreq->dst_ip,tmp_rreq->tos);
 				tmp_rreq->dttl = tmp_rreq->dttl - 1;
 			}	
@@ -248,7 +245,7 @@ int gen_rreq(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 	if(dst_ip == dtn_hello_ip)
 	{	
 		dttl = DTTL;
-		printk("It's a DTN hello!\n");
+		//printk("It's a DTN hello!\n");
 	}
 #endif
 
@@ -314,10 +311,6 @@ int gen_rreq(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 	insert_timer_directional(TASK_RESEND_RREQ, 0, RREQ_RETRIES, src_ip,
 			dst_ip, tos);
 	update_timer_queue();
-
-#ifdef CaiDebug
-printk("end in rreq\n");
-#endif
 
 	kfree(out_rreq);
 

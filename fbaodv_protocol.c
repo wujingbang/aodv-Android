@@ -92,7 +92,7 @@ static int __init init_fbaodv_module(void) {
 #ifdef DTN_HELLO
 	//inet_aton("192.168.2.2",&dtn_hello_ip);
 	inet_aton("127.127.127.127",&dtn_hello_ip);
-	printk("%s",inet_ntoa(dtn_hello_ip));
+	//printk("%s",inet_ntoa(dtn_hello_ip));
 	longitude = 0;
 	latitude = 0;
 #endif
@@ -235,12 +235,6 @@ static int __init init_fbaodv_module(void) {
 	insert_timer_simple(TASK_HELLO, HELLO_INTERVAL,g_mesh_ip );
 	insert_timer_simple(TASK_GW_CLEANUP, ACTIVE_GWROUTE_TIMEOUT, g_mesh_ip);
 	insert_timer_simple(TASK_CLEANUP, HELLO_INTERVAL+HELLO_INTERVAL/2, g_mesh_ip);
-
-#ifdef CaiDebug
-	//printk("-------Test DTN Hello---------\n");
-	//if(!insert_timer_simple(TASK_DTN_HELLO, 80*HELLO_INTERVAL, g_mesh_ip))
-		//printk("-------Test DTN Hello%d---------\n",TASK_DTN_HELLO);
-#endif
 
 	update_timer_queue();
 

@@ -85,6 +85,10 @@ void timer_queue_signal() {
 
 	// While there is still events that has timed out
 	while (tmp_task != NULL) {
+
+#ifdef CaidDebug
+	printk("tmp_task type:%d in timer queue\n",tmp_task);
+#endif
 		insert_task_from_timer(tmp_task);
 		tmp_task = first_timer_due(currtime);
 	}
@@ -199,6 +203,7 @@ int insert_timer_simple(u_int8_t task_type, u_int64_t delay, u_int32_t ip) {
 		printk("Error allocating timer!\n");
 		return -ENOMEM;
 	}
+
 	new_entry->src_ip = ip;
 	new_entry->dst_ip = ip;
 	new_entry->tos = NO_TOS;
@@ -308,6 +313,7 @@ void delete_timer(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos,
 	task *tmp_task;
 	task *prev_task;
 	task *dead_task = NULL;
+
 
 	//printk("deleting timer: %s  type: %u", inet_ntoa(id), type);
 	timer_write_lock();

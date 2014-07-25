@@ -15,7 +15,10 @@ extern u_int8_t g_routing_metric;
 extern aodv_neigh *aodv_neigh_list;
 extern aodv_dev *g_mesh_dev;
 ///////////brk_list////////
+#ifdef RECOVERYPATH
 extern brk_link *brk_list;
+#endif
+
 #ifdef BLACKLIST
 	extern u_int32_t aodv_blacklist_ip[10];
 
@@ -202,6 +205,7 @@ int recv_hello(task * tmp_packet) {
 		}
 
 
+#ifdef RECOVERYPATH
 		/*********************************************
             添加了通路处理部分，再检测到新邻居时，
             扫描断路表，并对相应条目发起路由发现
@@ -215,21 +219,14 @@ int recv_hello(task * tmp_packet) {
 		tos = 0x02;
 
 		if(tmp_link==NULL){//空，无需操作，返回
+#ifdef CaiDebug
 		    printk("The brk list is empty!\n");
+#endif
 		}
 		else{
 		    while(tmp_link!=NULL){//遍历断路表，发起路由发现
-#ifdef CaiDebug
-char s[20];
-char d[20];
-//char l[20];
-u_int8_t state;
-strcpy(s,inet_ntoa(tmp_link->src_ip));
-strcpy(d,inet_ntoa(tmp_link->dst_ip));
-state = tmp_link->state;
-printk("tmp_link is : %s:%s:%d\n",s,d,state);
-#endif
-		        if(tmp_link->state!=INVALID){//该断路未失效
+
+		        if(tmp_link->state!=INVALID && !is_overlapped_with_route(tmp_link) ){//该断路未失效
 		            if(tmp_link->dst_ip == tmp_packet->src_ip){//the new neighor is the right dst
 
 				//because gen_rcvp will remove the current tmp_link, so get next
@@ -252,9 +249,9 @@ printk("tmp_link is : %s:%s:%d\n",s,d,state);
 		                strcpy(src,inet_ntoa(tmp_link->src_ip));
 		                strcpy(dst,inet_ntoa(tmp_link->dst_ip));
 		                printk("Try recovery the link from %s to %s\n",src,dst);
-
-				tmp_link = tmp_link->next;
 #endif
+				tmp_link = tmp_link->next;
+
 		            	}//gen rreq
 			    }//else
 		        }//not invalid
@@ -264,7 +261,46 @@ printk("tmp_link is : %s:%s:%d\n",s,d,state);
 		}
 
 
-		/**********************************************/
+		/*********************manage brk_list*************************/
+
+		/*********************manage route redirection*********************/
+		
+		aodv_route *tmp_route;
+		tmp_route = first_aodv_route();
+		while(tmp_route && tmp_route->state != INVALID){
+			
+			if( (tmp_route->src_ip != tmp_route->dst_ip)
+					&&(tmp_route->src_ip !=g_mesh_ip) ){//not self route
+
+				gen_rrdp(tmp_route->src_ip,tmp_route->dst_ip,
+						tmp_route->last_hop,tmp_route->tos);
+			}
+
+#ifdef DTN
+
+			extern int dtn_register;
+			if( (tmp_route->src_ip == g_mesh_ip) && dtn_register 
+					&& (tmp_route->src_ip != tmp_route->dst_ip) ){//I'm the source,tell DTN
+
+				u_int32_t para[4];
+				para[0] = tmp_route->src_ip;
+				para[1] = tmp_route->dst_ip;
+				para[2] = NULL;
+				para[3] = (u_int32_t)RRDP_MESSAGE;
+				send2dtn((void*)para,DTNPORT);
+#ifdef CaiDebug
+				printk("------------send the rrdp to DTN-----------\n");
+#endif
+	
+#endif
+			}
+			tmp_route = tmp_route->next;
+		}
+
+		
+#endif
+
+
 
 
 		hello_orig->load_metric.load = load;
@@ -272,14 +308,13 @@ printk("tmp_link is : %s:%s:%d\n",s,d,state);
 
 	}
 
-	//Update neighbor timelife
+//Update neighbor timelife
 	delete_timer(hello_orig->ip, hello_orig->ip, NO_TOS, TASK_NEIGHBOR);
 	insert_timer_simple(TASK_NEIGHBOR, HELLO_INTERVAL
 			* (1 + ALLOWED_HELLO_LOSS) + 100, hello_orig->ip);
 	update_timer_queue();
 	hello_orig->lifetime = HELLO_INTERVAL * (1 + ALLOWED_HELLO_LOSS) + 20
 			+ getcurrtime();
-
 	if (g_routing_metric == HOPS) //it doesn't need metric computation
 		return 0;
 

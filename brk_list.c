@@ -5,7 +5,7 @@
     copyright            : (C) 2014 by Cai Bingying
     email                :
  ***************************************************************************/
-
+//#ifdef RECOVERYPATH
  //manage the brk_list
 //处理断路表，添加条目，删除条目，寻找指定条目等
  #include "brk_list.h"
@@ -38,7 +38,7 @@ inline void brk_list_write_unlock(void) {
 }
 
 //find first brk entry
-brk_link *first_brk_link() {
+brk_link *first_brk_link(void) {
 	return brk_list;
 }
 
@@ -135,9 +135,38 @@ brk_link *find_brk_link(u_int32_t src_ip, u_int32_t dst_ip) {
 
 }
 
+/*
+int is_overlapped_with_brk_link(aodv_route *tmp_route){
+
+	brk_link *tmp_link;
+
+	brk_list_read_lock();
+
+	tmp_link = brk_list;
+
+	while(tmp_link != NULL){
+		
+		if( (tmp_link->src_ip==tmp_route->src_ip)
+			&& (tmp_link->last_avail_ip==tmp_route->dst_ip) ){
+			//data link has overlap part
+			break;
+		}
+		
+		tmp_link = tmp_link->next;
+	}
+
+	if(tmp_link){
+		brk_list_read_unlock();
+		return 1;
+	}
+
+	brk_list_read_unlock();
+	return 0;//no overlap
+}
+*/
 
 //clean up the brk list -- 此功能保留，brk_list的清空应无需与内核交互
-int cleanup_brk_list() {
+int cleanup_brk_list(void) {
 	brk_link *dead_link, *tmp_link;
 
 	int error;
@@ -270,7 +299,7 @@ printk("New link should be put in the last of the list in brk_list.c\n");
 }
 
 
-int flush_brk_list() {
+int flush_brk_list(void) {
 	u_int64_t currtime = getcurrtime();
 	brk_link *dead_link, *tmp_link, *prev_link=NULL;
 
@@ -304,3 +333,4 @@ int flush_brk_list() {
 	return 1;
 }
 
+//#endif

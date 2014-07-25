@@ -31,12 +31,16 @@ int gen_rerr(u_int32_t brk_dst_ip) {
 	rerr *tmp_rerr;
 	int expired_routes = 0;
 
+<<<<<<< HEAD
 	//printk("----------------in gen rerr(%s)------------------\n",inet_ntoa(brk_dst_ip));
+=======
+>>>>>>> addRRDP
 
 
 	//找到第一条aodv路由
 	tmp_route = first_aodv_route();
 
+<<<<<<< HEAD
 /*
 #ifdef CaiDebug
 //test
@@ -46,6 +50,8 @@ int gen_rerr(u_int32_t brk_dst_ip) {
 		printk("tmp_route->state is %s\n",inet_ntoa(tmp_route->state));
 #endif
 */
+=======
+>>>>>>> addRRDP
 
 	//go through list
 	//遍历所有下一跳为brk_dst_ip的路由条目，并给该节点发送rerr或无效化该路由
@@ -78,7 +84,11 @@ int gen_rerr(u_int32_t brk_dst_ip) {
 					//last DTN hop near the brk node
 					extern int dtn_register;
 					tmp_rerr->last_avail_ip = NULL;
+<<<<<<< HEAD
 					//printk("dtn_register=%d;last_avail:%s\n",dtn_register,inet_ntoa(tmp_rerr->last_avail_ip));
+=======
+					
+>>>>>>> addRRDP
 					tmp_rerr->src_ip = tmp_route->src_ip;
 					if(dtn_register==1)
 					{
@@ -111,10 +121,8 @@ strcpy(brk,inet_ntoa(brk_dst_ip));
 	char last[20];
 strcpy(last,inet_ntoa(tmp_route->last_hop));
 
-	printk("-------------------------------------------\n");
-
 	printk("rerr src is %s,brk_dst_ip is %s,the last hop is %s\n",local,brk,last);
-	printk("--------------------------------------------\n");
+	
 #endif
                     		send_message(tmp_route->last_hop, NET_DIAMETER, tmp_rerr,sizeof(rerr));
                      kfree(tmp_rerr);
@@ -228,9 +236,7 @@ printk("new brk link %s:%s:%s:%s\n",s,d,l,la);
  	strcpy(local,inet_ntoa(g_mesh_ip));
 	char last[20];
 	strcpy(last,inet_ntoa(tmp_route->last_hop));
-	printk("---------------------------------------------\n");
 	printk("invalidate tmp_route %s to %s,expored_route is %d\n",local,last,expired_routes);
-	printk("---------------------------------------------\n");
 #endif
 			}
 		}
@@ -239,6 +245,7 @@ printk("new brk link %s:%s:%s:%s\n",s,d,l,la);
 
 	}
 	if (g_routing_metric == WCIM && expired_routes != 0)
+
 	update_my_load();
 
 
@@ -272,10 +279,6 @@ int recv_rerr(task * tmp_packet) {
 	para[1] = tmp_rerr->dst_ip;
 	para[2] = tmp_rerr->last_avail_ip;
 	para[3] = (u_int32_t)tmp_rerr->type;
-
-#ifdef CaiDebug
-	printk("dtn_register: %d;last_avail:%s\n", dtn_register,inet_ntoa(tmp_rerr->last_avail_ip));
-#endif
 
 	if( dtn_register==1 ){
 	    //若已注册DTN并且lastavail为空或者接收到的tmp_rerr大小小于定义了DTN的rerr
@@ -321,6 +324,7 @@ int recv_rerr(task * tmp_packet) {
 				send_message(tmp_route->last_hop, NET_DIAMETER, tmp_rerr,
 						sizeof(rerr));
 
+<<<<<<< HEAD
 #ifdef CaiDebug
 	char src[20];
 	strcpy(src,inet_ntoa(tmp_packet->src_ip));
@@ -332,6 +336,8 @@ int recv_rerr(task * tmp_packet) {
 	printk("--------------------------------------------\n");
 #endif
 
+=======
+>>>>>>> addRRDP
 #ifdef RECOVERYPATH
                     /****************************************************
                         加入断路表处理，每当产生一个新的rerr包时，也

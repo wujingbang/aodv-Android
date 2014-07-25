@@ -243,101 +243,13 @@ int send2dtn(void * data){
     return 0;
 }
 */
-/*
-//overwrite the above function to a function with three paras
-int send2dtn(void * data){
-
-	u_int32_t dst_ip = ((u_int32_t *)data)[0];
-	u_int32_t last_avail_ip = ((u_int32_t *)data)[1];
-	u_int32_t src_ip = ((u_int32_t *)data)[2];
-	int datalen = 18;
-//#ifdef DEBUG
-	char s1[16],s2[16],s3[16];
-	strcpy(s1, inet_ntoa(dst_ip));
-	strcpy(s2, inet_ntoa(last_avail_ip));
-	strcpy(s3, inet_ntoa(src_ip));
-	printk("send RRER info to DTN, dst: %s, last_avail: %s,src: %s\n", s1, s2, s3);
-//#endif
-
-
-
-    struct msghdr msg;
-    struct iovec iov;
-    aodv_dev *tmp_dev;
-    mm_segment_t oldfs;
-    u_int32_t space;
-    int len;
-
-    aodv_neigh *tmp_neigh;
-
-
-
-    memset(&sin, 0, sizeof(sin));
-    sin.sin_family = AF_INET;
-
-    sin.sin_addr.s_addr = g_mesh_ip;
-    sin.sin_port = htons((unsigned short) DTNPORT);
-
-
-    //define the message we are going to be sending out
-    msg.msg_name = (void *) &(sin);
-    msg.msg_namelen = sizeof(sin);
-    msg.msg_iov = &iov;
-
-    msg.msg_iovlen = 1;
-    msg.msg_control = NULL;
-    msg.msg_controllen = 0;
-    msg.msg_flags = MSG_DONTWAIT | MSG_NOSIGNAL;
-
-    msg.msg_iov->iov_len = (__kernel_size_t) datalen;
-    msg.msg_iov->iov_base = data;
-#ifdef DEBUG
-
-    printk("%x\n", ((u_int32_t *)data)[0]);
-    printk("%x\n", ((u_int32_t *)data)[1]);
-    printk("%x\n", ((u_int32_t *)data)[2]);
-#endif
-	tmp_dev = g_mesh_dev;
-
-
-    if (tmp_dev == NULL)
-    {
-        printk("Error sending! Unable to find interface!\n");
-
-        return 0;
-    }
-
-    space = sock_wspace(tmp_dev->sock->sk);
-
-
-    if (space < datalen)
-    {
-
-        printk("Space: %d, Data: %d \n", space, (int)datalen);
-        return 0;
-    }
-
-
-    oldfs = get_fs();
-    set_fs(KERNEL_DS);
-
-    len = sock_sendmsg(tmp_dev->sock, &msg,(size_t) datalen);
-
-    if (len < 0)
-    {
-        printk("Error sending! err no: %d, Dst: %s\n", len, inet_ntoa(dst_ip));
-
-    }
-    set_fs(oldfs);
-    return 0;
-}*/
 
 //Cai Bingying : overwrite the above function to a function with four paras
 //it's used in sending rerr and rcvp to DTN
 int send2dtn(void * data,unsigned short port){
 
 	int datalen = 24;
-	printk("send to DTN\n");
+	//printk("send to DTN\n");
 
 
     	u_int32_t src_ip = ((u_int32_t *)data)[0];
@@ -426,14 +338,12 @@ int send2dtn(void * data,unsigned short port){
 
     }
     set_fs(oldfs);
+
     return 0;
 }
 
 int query_location(unsigned short port){
 
-#ifdef CaiDebug
-	printk("query location\n");
-#endif
 	int datalen = 16;
 	
 	char str[16];
