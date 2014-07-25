@@ -32,6 +32,7 @@ int valid_aodv_packet(int numbytes, int type, char *data, struct timeval tv) {
 
 #ifdef RECOVERYPATH
 	rcvp *tmp_rcvp;
+	rrdp *tmp_rrdp;
 #endif
 
 	s_probe *tmp_sprobe;
@@ -75,6 +76,11 @@ int valid_aodv_packet(int numbytes, int type, char *data, struct timeval tv) {
     	case RCVP_MESSAGE:
         	tmp_rcvp = (rcvp *) data;
         	if(numbytes == sizeof(rcvp))
+       			return 1;
+        	break;
+	case RRDP_MESSAGE:
+		tmp_rrdp = (rrdp *) data;
+        	if(numbytes == sizeof(rrdp))
        			return 1;
         	break;
 	#endif
@@ -202,13 +208,9 @@ unsigned int input_handler(unsigned int hooknum, struct sk_buff *skb,
 		extern u_int32_t latitude;
 		void *loc_data;
 		loc_data = &(skb->data[start_point]);
-printk("*********1**********\n");
 		u_int32_t src_ip = ((u_int32_t *)loc_data)[0];
-printk("*********2**********\n");
 		u_int32_t tos = ((u_int32_t *)loc_data)[1];
-printk("*********3**********\n");
 		u_int32_t x = ((u_int32_t *)loc_data)[2];
-printk("*********4**********\n");
 		u_int32_t y = ((u_int32_t *)loc_data)[3];
 		longitude = x;
 		latitude = y;
@@ -216,13 +218,13 @@ printk("*********4**********\n");
 		u_int32_t tos = ((u_int32_t *)skb->data)[1];
 		u_int32_t x = ((u_int32_t *)skb->data)[2];
 		u_int32_t y = ((u_int32_t *)skb->data)[3];*/
-		printk("*********GOT Location Info%s  %ld  %ld**********\n",inet_ntoa(src_ip),ntohl(x),ntohl(y));
-			
-		gen_rrep(src_ip,dtn_hello_ip,(unsigned char)tos);
-printk("*********5**********\n");
-		
-		
-		
+#ifdef CaiDebug
+		printk("*********GOT Location Info%s  %ld  %ld**********\n",inet_ntoa(src_ip),ntohl(x),ntohl(y));	
+#endif
+		//gen_rrep(src_ip,dtn_hello_ip,(unsigned char)tos);
+		insert_timer_directional(TASK_SEND_RREP, RREP_TIMER, 0,
+						src_ip, dtn_hello_ip,(unsigned char)tos);
+		update_timer_queue();
 }
 #ifdef BLACKLIST
 	int k = 0;
