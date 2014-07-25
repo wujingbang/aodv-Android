@@ -137,7 +137,7 @@ int is_control_task(int type){
 
 		case TASK_UPDATE_LOAD:
 		case TASK_RECV_RCVP:
-		case TASK_RECV_RRDP:
+		//case TASK_RECV_RRDP:
 		case TASK_DTN_HELLO:return 1;
 
 
