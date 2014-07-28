@@ -25,36 +25,17 @@ int reply_to_rrer(u_int32_t source, u_int32_t destination) {
 	return 0;
 }
 
-//brk_dst_ip为已断开链路的目的ip
+//brk_dst_ip为锟窖断匡拷锟斤拷路锟斤拷目锟斤拷ip
 int gen_rerr(u_int32_t brk_dst_ip) {
 	aodv_route *tmp_route;
 	rerr *tmp_rerr;
 	int expired_routes = 0;
 
-<<<<<<< HEAD
-	//printk("----------------in gen rerr(%s)------------------\n",inet_ntoa(brk_dst_ip));
-=======
->>>>>>> addRRDP
-
-
-	//找到第一条aodv路由
+	//锟揭碉拷锟斤拷一锟斤拷aodv路锟斤拷
 	tmp_route = first_aodv_route();
 
-<<<<<<< HEAD
-/*
-#ifdef CaiDebug
-//test
-	if(tmp_route==NULL)
-		printk("tmp_route is null\n");
-	else
-		printk("tmp_route->state is %s\n",inet_ntoa(tmp_route->state));
-#endif
-*/
-=======
->>>>>>> addRRDP
-
 	//go through list
-	//遍历所有下一跳为brk_dst_ip的路由条目，并给该节点发送rerr或无效化该路由
+	//锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷一锟斤拷为brk_dst_ip锟斤拷路锟斤拷锟斤拷目锟斤拷锟斤拷锟斤拷锟矫节点发锟斤拷rerr锟斤拷锟斤拷效锟斤拷锟斤拷路锟斤拷
 	while (tmp_route != NULL) {
 
 		//printk("tmp_route->next_hop is %s\n",inet_ntoa(tmp_route->next_hop));
@@ -84,11 +65,7 @@ int gen_rerr(u_int32_t brk_dst_ip) {
 					//last DTN hop near the brk node
 					extern int dtn_register;
 					tmp_rerr->last_avail_ip = NULL;
-<<<<<<< HEAD
-					//printk("dtn_register=%d;last_avail:%s\n",dtn_register,inet_ntoa(tmp_rerr->last_avail_ip));
-=======
-					
->>>>>>> addRRDP
+
 					tmp_rerr->src_ip = tmp_route->src_ip;
 					if(dtn_register==1)
 					{
@@ -103,7 +80,7 @@ int gen_rerr(u_int32_t brk_dst_ip) {
 						para[1] = tmp_rerr->dst_ip;
 						para[2] = tmp_rerr->last_avail_ip;
 
-						//类型处理
+						//锟斤拷锟绞癸拷锟斤拷
 						para[3] = (u_int32_t)tmp_rerr->type;
 						//
 						send2dtn((void*)para,DTNPORT);
@@ -129,8 +106,8 @@ strcpy(last,inet_ntoa(tmp_route->last_hop));
 
 #ifdef RECOVERYPATH
                     /****************************************************
-                        加入断路表处理，每当产生一个新的rerr包时，也
-                        新建一个brk_list的条目
+                        锟斤拷锟斤拷锟斤拷路锟斤拷锟斤拷锟斤拷锟斤拷每锟斤拷锟斤拷锟斤拷一锟斤拷锟铰碉拷rerr锟斤拷时锟斤拷也
+                        锟铰斤拷一锟斤拷brk_list锟斤拷锟斤拷目
                     *****************************************************/
 
                     brk_link *tmp_link;
@@ -142,15 +119,15 @@ strcpy(last,inet_ntoa(tmp_route->last_hop));
                     }
 #endif
                     tmp_link = find_brk_link(tmp_route->src_ip,tmp_route->dst_ip);
-                    if(tmp_link != NULL){//已存在，则更新生存期，这种情况极少出现
-                        //Update brk_link timelife，不需要计时器的处理
+                    if(tmp_link != NULL){//锟窖达拷锟节ｏ拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟节ｏ拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟劫筹拷锟斤拷
+                        //Update brk_link timelife锟斤拷锟斤拷锟斤拷要锟斤拷时锟斤拷锟侥达拷锟斤拷
                         tmp_link->lifetime = getcurrtime() + BRK_LINK_TIMEOUT;
                         flush_brk_list();
 
                     }
                     else{
                         tmp_link = create_brk_link(tmp_route->src_ip,tmp_route->dst_ip,
-                                               tmp_route->last_hop,lastavail);//创建并插入
+                                               tmp_route->last_hop,lastavail);//锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷
                         if(tmp_link==NULL) printk("Creat new brk link failed!\n");
 #ifdef CaiDebug
                         char s[20];
@@ -194,7 +171,7 @@ strcpy(last,inet_ntoa(tmp_route->last_hop));
 						para[1] = tmp_route->dst_ip;
 						para[2] = last_avail;
 
-						//类型处理
+						//锟斤拷锟绞癸拷锟斤拷
 						para[3] = (u_int32_t)RERR_MESSAGE;
 						//
 						send2dtn((void*)para,DTNPORT);
@@ -281,7 +258,7 @@ int recv_rerr(task * tmp_packet) {
 	para[3] = (u_int32_t)tmp_rerr->type;
 
 	if( dtn_register==1 ){
-	    //若已注册DTN并且lastavail为空或者接收到的tmp_rerr大小小于定义了DTN的rerr
+	    //锟斤拷锟斤拷注锟斤拷DTN锟斤拷锟斤拷lastavail为锟秸伙拷锟竭斤拷锟秸碉拷锟斤拷tmp_rerr锟斤拷小小锟节讹拷锟斤拷锟斤拷DTN锟斤拷rerr
 		if( para[2]==NULL )//current node is the nearest DTN node to brk link
 		{
 			para[2] = g_mesh_ip;
@@ -324,37 +301,23 @@ int recv_rerr(task * tmp_packet) {
 				send_message(tmp_route->last_hop, NET_DIAMETER, tmp_rerr,
 						sizeof(rerr));
 
-<<<<<<< HEAD
-#ifdef CaiDebug
-	char src[20];
-	strcpy(src,inet_ntoa(tmp_packet->src_ip));
-	char nex[20];
-	strcpy(nex,inet_ntoa(tmp_route->next_hop));
-	printk("--------------------------------------------\n");
-	printk("get rerr from %s,the last hop is %s\n",src,nex);
-
-	printk("--------------------------------------------\n");
-#endif
-
-=======
->>>>>>> addRRDP
 #ifdef RECOVERYPATH
                     /****************************************************
-                        加入断路表处理，每当产生一个新的rerr包时，也
-                        新建一个brk_list的条目
+                        锟斤拷锟斤拷锟斤拷路锟斤拷锟斤拷锟斤拷锟斤拷每锟斤拷锟斤拷锟斤拷一锟斤拷锟铰碉拷rerr锟斤拷时锟斤拷也
+                        锟铰斤拷一锟斤拷brk_list锟斤拷锟斤拷目
                     *****************************************************/
                     brk_link *tmp_link;
 
                     tmp_link = find_brk_link(tmp_route->src_ip,tmp_route->dst_ip);
-                    if(tmp_link != NULL){//已存在，则更新生存期，这种情况极少出现
-                        //Update brk_link timelife，不需要计时器的处理
+                    if(tmp_link != NULL){//锟窖达拷锟节ｏ拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟节ｏ拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟劫筹拷锟斤拷
+                        //Update brk_link timelife锟斤拷锟斤拷锟斤拷要锟斤拷时锟斤拷锟侥达拷锟斤拷
                         tmp_link->lifetime = getcurrtime() + BRK_LINK_TIMEOUT;
                         flush_brk_list();
 
                     }
                     else{
                         tmp_link = create_brk_link(tmp_route->src_ip,tmp_route->dst_ip,
-                                               tmp_route->last_hop,tmp_rerr->last_avail_ip);//创建并插入,注意此处的ast_avail_ip应来自断路包
+                                               tmp_route->last_hop,tmp_rerr->last_avail_ip);//锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷,注锟斤拷锟剿达拷锟斤拷ast_avail_ip应锟斤拷锟皆讹拷路锟斤拷
 
                         if(tmp_link==NULL) printk("Creat new brk link failed!\n");
 #ifdef CaiDebug
@@ -382,8 +345,8 @@ int recv_rerr(task * tmp_packet) {
 #ifdef RECOVERYPATH
 		else{
 		    /****************************************************
-                        加入断路表处理，每当产生一个新的rerr包时，也
-                        新建一个brk_list的条目
+                        锟斤拷锟斤拷锟斤拷路锟斤拷锟斤拷锟斤拷锟斤拷每锟斤拷锟斤拷锟斤拷一锟斤拷锟铰碉拷rerr锟斤拷时锟斤拷也
+                        锟铰斤拷一锟斤拷brk_list锟斤拷锟斤拷目
 
                     *****************************************************/
 #ifdef DTN
@@ -398,8 +361,8 @@ int recv_rerr(task * tmp_packet) {
                     brk_link *tmp_link;
 
                     tmp_link = find_brk_link(tmp_route->src_ip,tmp_route->dst_ip);
-                    if(tmp_link != NULL){//已存在，则更新生存期，这种情况极少出现
-                        //Update brk_link timelife，不需要计时器的处理
+                    if(tmp_link != NULL){//锟窖达拷锟节ｏ拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟节ｏ拷锟斤拷锟斤拷锟斤拷锟斤拷锟斤拷锟劫筹拷锟斤拷
+                        //Update brk_link timelife锟斤拷锟斤拷锟斤拷要锟斤拷时锟斤拷锟侥达拷锟斤拷
                         tmp_link->lifetime = getcurrtime() + BRK_LINK_TIMEOUT;
                         flush_brk_list();
 
