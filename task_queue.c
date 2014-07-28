@@ -137,15 +137,12 @@ int is_control_task(int type){
 
 		case TASK_UPDATE_LOAD:
 		case TASK_RECV_RCVP:
-<<<<<<< HEAD
-<<<<<<< HEAD
-		//case TASK_RECV_RRDP:
-=======
+#ifdef RECOVERYPATH
 		case TASK_RECV_RRDP:
->>>>>>> addDTNneigh
-=======
-		case TASK_RECV_RRDP:
->>>>>>> addRRDP
+#endif
+#ifdef DTN_HELLO
+		case TASK_DTN_HELLO:
+#endif
 		case TASK_DTN_HELLO:return 1;
 
 
@@ -176,14 +173,6 @@ int queue_aodv_task(task * new_entry) {
 
 	task_q = new_entry;
 
-<<<<<<< HEAD
-
-//#ifdef CaiDebug
-	//if(new_entry->type==TASK_DTN_HELLO)
-		//printk("-----------%d---------------\n",new_entry->type);
-//#endif
-=======
->>>>>>> addRRDP
 	//add the new task already
 	if(is_control_task(new_entry->type)){
 		if(sub_q==NULL && sub_end==NULL){//the sub queue is empty
@@ -195,12 +184,6 @@ int queue_aodv_task(task * new_entry) {
 			sub_q->prev_control = new_entry;
 			sub_q = new_entry;
 		}
-<<<<<<< HEAD
-#ifdef CaiDebug
-			//printk("-----------%d:126---------------\n",new_entry->type);
-#endif
-=======
->>>>>>> addRRDP
 	}
 
 	//unlock table
@@ -224,12 +207,6 @@ task *get_task() {
 	if(sub_end){
 
 		tmp_task = sub_end;
-<<<<<<< HEAD
-		//#ifdef CaiDebug
-			//printk("-----------type=%d---------------\n",tmp_task->type);
-		//#endif
-=======
->>>>>>> addRRDP
 		
 		if(sub_end == sub_q){//one element
 			if( (task_end==task_q) && (task_end==sub_end) ){
@@ -266,37 +243,14 @@ task *get_task() {
 			}
 			
 			sub_end = sub_end->prev_control;
-<<<<<<< HEAD
-			
-			//#ifdef CaiDebug
-			///printk("-----------type=%d---------------\n",tmp_task->type);
-			//#endif
-
-			
-		}//if-else
-		
-		queue_unlock();
-
-//#ifdef CaiDebug
-		//if(tmp_task->type==TASK_DTN_HELLO)
-		//printk("-----------%d---------------\n",tmp_task->type);
-//#endif
-=======
 				
 		}//if-else
 		
 		queue_unlock();
->>>>>>> addRRDP
 		
 		return tmp_task;
 	}//if sub_end
 	
-<<<<<<< HEAD
-	#ifdef CaiDebug
-			//printk("-----------data task---------------\n");
-		#endif
-=======
->>>>>>> addRRDP
 	//if no control task ,get the end of the queue
 	if (task_end) {
 		tmp_task = task_end;
@@ -307,13 +261,7 @@ task *get_task() {
 			task_end = task_end->prev;
 		}
 		queue_unlock();
-<<<<<<< HEAD
-		#ifdef CaiDebug
-			//printk("-----------data task:%d---------------\n",tmp_task);
-		#endif
-=======
-
->>>>>>> addRRDP
+		
 		return tmp_task;
 	}
 	if (task_q != NULL) {
