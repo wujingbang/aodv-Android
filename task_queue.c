@@ -143,7 +143,8 @@ int is_control_task(int type){
 #ifdef DTN_HELLO
 		case TASK_DTN_HELLO:
 #endif
-		case TASK_DTN_HELLO:return 1;
+		case TASK_GEN_RREQ:
+			return 1;
 
 
 
@@ -183,6 +184,47 @@ int queue_aodv_task(task * new_entry) {
 		else{
 			sub_q->prev_control = new_entry;
 			sub_q = new_entry;
+		}
+	}
+
+	//unlock table
+	queue_unlock();
+
+	//wake up the AODV thread
+	kick_aodv();
+
+	return 0;
+}
+
+int queue_control_task_at_front(task * new_entry) {
+
+	/*lock table */
+	queue_lock();
+
+	//Set all the variables
+	new_entry->next = NULL;
+	new_entry->prev = task_end;
+
+	if (task_end != NULL) {
+		task_end->next = new_entry;
+	}
+
+	if (task_q == NULL) {
+		task_q = new_entry;
+	}
+
+	task_end = new_entry;
+
+	//add the new task already
+	if(is_control_task(new_entry->type)){
+		if(sub_q==NULL && sub_end==NULL){//the sub queue is empty
+			sub_q = new_entry;
+			sub_end = new_entry;
+			
+		}
+		else{
+			new_entry->prev_control = sub_end;
+			sub_end = new_entry;
 		}
 	}
 
@@ -308,6 +350,16 @@ int insert_task(int type, struct sk_buff *packet) {
 	queue_aodv_task(new_task);
 	return 0;
 }
+
+int insert_task_at_front(task * new_task) {
+	if (!new_task) {
+		printk("Passed a Null task Task\n");
+		return -ENOMEM;
+	}
+	queue_control_task_at_front(new_task);
+	return 0;
+}
+
 
 int insert_task_from_timer(task * timer_task) {
 

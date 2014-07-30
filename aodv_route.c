@@ -403,13 +403,16 @@ int rreq_aodv_route(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos,
 #ifdef DEBUG
 		 	printk("Replacing Route\n");
 	#endif
-		 	error = rpdb_route(RTM_DELROUTE, tmp_src_entry->rt_table,
-		 					tmp_route->tos, tmp_route->src_ip, tmp_route->dst_ip,
-		 					tmp_route->next_hop, tmp_route->dev->index,
-		 					tmp_route->num_hops);
-		 	if (error < 0) {
-		 		printk ("Error sending with rtnetlink - Delete Route - err no: %d\n", error);
-		 		return 0;
+
+
+			
+			 error = rpdb_route(RTM_DELROUTE, tmp_src_entry->rt_table,
+			 				tmp_route->tos, tmp_route->src_ip, tmp_route->dst_ip,
+			 				tmp_route->next_hop, tmp_route->dev->index,
+			 				tmp_route->num_hops);
+			 if (error < 0) {
+			 	printk ("Error sending with rtnetlink - Delete Route - err no: %d\n", error);
+			 	return 0;
 		 	}
 		}
 	 }
@@ -451,32 +454,32 @@ int rrep_aodv_route(aodv_route *rep_route){
 		return 0;
 	}
 	
+
 	error = rpdb_route(RTM_NEWROUTE, tmp_src_entry->rt_table,
 			rep_route->tos, rep_route->src_ip, rep_route->dst_ip,
 			rep_route->next_hop, rep_route->dev->index,
 			rep_route->num_hops);
 	
 	if (error < 0) {
-		 				printk(
-		 						"Error sending with rtnetlink - Delete Route - err no: %d\n",
-		 						error);
-		 				return 0;
-		 			}
+		printk("Error sending with rtnetlink - Delete Route - err no: %d\n",error);
+		return 0;
+	}
+
 	
-		route_write_lock(); //lifetime and route_valid are modified or read in packet_out.c - avoid conflicts
-		rep_route->state = REPLIED;
-		rep_route->lifetime = getcurrtime() + DELETE_PERIOD;
-		route_write_unlock();
-		ipq_send_ip(rep_route->src_ip, rep_route->dst_ip, rep_route->tos);
+	route_write_lock(); //lifetime and route_valid are modified or read in packet_out.c - avoid conflicts
+	rep_route->state = REPLIED;
+	rep_route->lifetime = getcurrtime() + DELETE_PERIOD;
+	route_write_unlock();
+	ipq_send_ip(rep_route->src_ip, rep_route->dst_ip, rep_route->tos);
 	
 #ifdef DEBUG
-		strcpy(src, inet_ntoa(rep_route->src_ip));
-		strcpy(dst, inet_ntoa(rep_route->dst_ip));
+	strcpy(src, inet_ntoa(rep_route->src_ip));
+	strcpy(dst, inet_ntoa(rep_route->dst_ip));
 
-		printk("Installing route from %s ", src);
-		printk("to %s with ToS %u - Next Hop: %s - path_metric: %u\n", dst, rep_route->tos, inet_ntoa(rep_route->next_hop),rep_route->path_metric);
+	printk("Installing route from %s ", src);
+	printk("to %s with ToS %u - Next Hop: %s - path_metric: %u\n", dst, rep_route->tos, inet_ntoa(rep_route->next_hop),rep_route->path_metric);
 #endif
-		return 1;
+	return 1;
 }
 
 aodv_route *find_aodv_route(u_int32_t src_ip, u_int32_t dst_ip,

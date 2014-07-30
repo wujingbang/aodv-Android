@@ -184,8 +184,15 @@ int rpdb_route(unsigned char type, int rt_table, unsigned char tos,
 	mm_segment_t oldfs;
 	struct socket *rt_socket;
 
+#ifdef DTN_HELLO
+	extern u_int32_t dtn_hello_ip;
+	if(ip_dst==dtn_hello_ip || ip_src==dtn_hello_ip) {
+		return 1;
+	}	
+#endif
+
 //#ifdef AODV_SIGNALLING
-#ifdef DEBUG
+#ifdef DEBUG0
 	char src[20];
 	char dst[20];
 	char nex[20];

@@ -73,7 +73,7 @@ int recv_rreq(task * tmp_packet) {
 	}
 
 	tmp_rreq->num_hops++;
-
+/*
 	if (g_routing_metric == ETT) {
 		error = ett_metric(tmp_neigh, tmp_rreq);
 		if (error) {
@@ -93,6 +93,7 @@ int recv_rreq(task * tmp_packet) {
 			return 1;
 		}
 	} else
+*/
 		//number of hops
 		tmp_rreq->path_metric =tmp_rreq->num_hops;
 
@@ -238,7 +239,9 @@ int gen_rreq(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 //		return 0;
 //	}dst_ip
 
-	
+//////
+//printk("--------gen_rreq %s-------\n",inet_ntoa(dst_ip));	
+/////
 #ifdef DTN_HELLO
 	extern u_int32_t dtn_hello_ip;
 	u_int8_t dttl=0;
@@ -249,10 +252,10 @@ int gen_rreq(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 	}
 #endif
 
-	if (find_timer(src_ip, dst_ip, tos, TASK_RESEND_RREQ)) {
-			printk("don't flood the net with new rreq, wait...\n");
-			return 1;
-	}
+//	if (find_timer(src_ip, dst_ip, tos, TASK_RESEND_RREQ)) {
+//			printk("don't flood the net with new rreq, wait...\n");
+//			return 1;
+//	}
 #ifdef DEBUG
 	else {
 		char src[16];
@@ -307,11 +310,9 @@ int gen_rreq(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 
 	convert_rreq_to_network(out_rreq);
 	local_broadcast(out_ttl, out_rreq, sizeof(rreq));
-
 	insert_timer_directional(TASK_RESEND_RREQ, 0, RREQ_RETRIES, src_ip,
 			dst_ip, tos);
 	update_timer_queue();
-
 	kfree(out_rreq);
 
 	return 1;

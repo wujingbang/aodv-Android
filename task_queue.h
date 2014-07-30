@@ -21,6 +21,7 @@ task *get_task(void);
 task *create_task(int type);
 int insert_task(int type, struct sk_buff *packet);
 int insert_task_from_timer(task * timer_task);
+int insert_task_at_front(task * new_task);
 void init_task_queue(void);
 void cleanup_task_queue(void);
 

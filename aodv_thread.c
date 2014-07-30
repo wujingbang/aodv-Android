@@ -214,6 +214,10 @@ void aodv(void) {
 				update_my_load();
 				break;
 
+			case TASK_GEN_RREQ:
+				gen_rreq(tmp_task->src_ip, tmp_task->dst_ip, tmp_task->tos);
+				break;
+
 			default:
 				break;
 			}

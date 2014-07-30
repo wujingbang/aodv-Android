@@ -75,8 +75,9 @@
 //remove it when test end,in aodv.h, aove_thread.c , task_queue.c
 #define RECOVERYPATH 
 #define DTN
-//#define DEBUG 0
-//#define CaiDebug                666
+//#define DEBUG
+//#define CaiDebug
+//#define DEBUG0
 #define extention               667
 #define DTNREGISTER		9999
 #define DTNPORT			10000
@@ -114,7 +115,7 @@
 #define TTL_VALUE             3
 
 ////////DTTL means DTN TTL//////////
-#define DTTL			5
+#define DTTL			15
 
 //ST Gateway Definitions
 #define ST_INTERVAL           10000
@@ -221,6 +222,7 @@
 
 #define TASK_UPDATE_LOAD 131
 
+#define TASK_GEN_RREQ 132
 
 //Packet Definitions
 /////////////////////////////

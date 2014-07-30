@@ -269,7 +269,7 @@ int gen_rrep(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 	aodv_route *src_route;
 	rrep *tmp_rrep;
 
-#ifdef DEBUG
+#ifdef DEBUG0
 	char src[16];
 	char dst[16];
 	strcpy (src, inet_ntoa(src_ip));
