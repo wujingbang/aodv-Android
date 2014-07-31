@@ -213,6 +213,7 @@ int recv_hello(task * tmp_packet) {
 		//printk("Start to manage brk_list in hello.c!\n");
 		brk_link *tmp_link;
 		tmp_link = brk_list;
+		int is_rcvp = 0;
 		unsigned char tos;
 		//默认速率为1Mbps类型，可能需要进行调整
 
@@ -225,16 +226,15 @@ int recv_hello(task * tmp_packet) {
 		}
 		else{
 		    while(tmp_link!=NULL){//遍历断路表，发起路由发现
-
+			is_rcvp = 0;
 		        if(tmp_link->state!=INVALID && !is_overlapped_with_route(tmp_link) ){//该断路未失效
 		            if(tmp_link->dst_ip == tmp_packet->src_ip){//the new neighor is the right dst
-
 				//because gen_rcvp will remove the current tmp_link, so get next
 				//link sould be manage in this segment,the same in else
 				//tmp_link = tmp_link->next;
-				//
                         	gen_rcvp(tmp_packet->src_ip);
 				//gen_rcvp will manage all link which has a same dst,so just break
+				is_rcvp = 1;
 				break;
 #ifdef CaiDebug
     printk("the new neighbor is just the dst of brk_link,gen rcvp to it\n");
@@ -249,14 +249,14 @@ int recv_hello(task * tmp_packet) {
 		                strcpy(src,inet_ntoa(tmp_link->src_ip));
 		                strcpy(dst,inet_ntoa(tmp_link->dst_ip));
 		                printk("Try recovery the link from %s to %s\n",src,dst);
-#endif
-				tmp_link = tmp_link->next;
-
+#endif	
 		            	}//gen rreq
+
 			    }//else
 		        }//not invalid
+			if(!is_rcvp)
+		        	tmp_link = tmp_link->next;
 
-		        //tmp_link = tmp_link->next;
 		    }//while
 		}
 
@@ -268,13 +268,13 @@ int recv_hello(task * tmp_packet) {
 		aodv_route *tmp_route;
 		tmp_route = first_aodv_route();
 		while(tmp_route && tmp_route->state != INVALID){
-			
 			if( (tmp_route->src_ip != tmp_route->dst_ip)
 					&&(tmp_route->src_ip !=g_mesh_ip) ){//not self route
 
 				gen_rrdp(tmp_route->src_ip,tmp_route->dst_ip,
 						tmp_route->last_hop,tmp_route->tos);
 			}
+
 
 #ifdef DTN
 
