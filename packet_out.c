@@ -58,7 +58,7 @@ unsigned int output_handler(unsigned int hooknum, struct sk_buff *skb,
 	
 	tmp_route = find_aodv_route(source, destination, ip->tos);
 	
-#ifdef DEBUG
+#ifdef DEBUG0
 	if (tmp_route) {
 		char src[16];
 		char dst[16];
@@ -71,15 +71,15 @@ unsigned int output_handler(unsigned int hooknum, struct sk_buff *skb,
 #endif
 	if ((tmp_route == NULL) || (tmp_route->state == INVALID)) {
 		if (source == g_mesh_ip || (source == g_null_ip && g_aodv_gateway)) {
-//			if (gen_rreq(source, destination, ip->tos)){
-//				//printk("the tos is %s in packet_out.c\n");
-//				printk("NF_QUEUE1\n");
-//				return NF_QUEUE;
-//			}
-//			else {
-//				printk("NF_DROP2\n");
-//				return NF_DROP;
-//			}
+			/*if (gen_rreq(source, destination, ip->tos)){
+				//printk("the tos is %s in packet_out.c\n");
+				printk("NF_QUEUE1\n");
+				return NF_QUEUE;
+			}
+			else {
+				printk("NF_DROP2\n");
+				return NF_DROP;
+			}*/
 			task *new_task;
 			new_task = create_task(TASK_GEN_RREQ);
 			new_task->src_ip = source;

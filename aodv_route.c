@@ -289,7 +289,7 @@ void insert_aodv_route(aodv_route * new_route) { //ordenamos por dst_ip
 aodv_route *create_aodv_route(u_int32_t src_ip, u_int32_t dst_ip,
 		unsigned char tos, u_int32_t dst_id) {
 	aodv_route *tmp_entry;
-#ifdef DEBUG
+#ifdef DEBUG0
 	char src[20];
 	char dst[20];
 	strcpy(src, inet_ntoa(src_ip));
@@ -325,7 +325,7 @@ aodv_route *create_aodv_route(u_int32_t src_ip, u_int32_t dst_ip,
 	tmp_entry->neigh_route = FALSE;
 
 	insert_aodv_route(tmp_entry);
-#ifdef DEBUG
+#ifdef DEBUG0
 	if (aodv_route_table == NULL) // if the routing table is empty
 	{
 		printk ("routing table still NULL after insert!! ");
@@ -337,7 +337,7 @@ aodv_route *create_aodv_route(u_int32_t src_ip, u_int32_t dst_ip,
 int rreq_aodv_route(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos,
 		aodv_neigh *next_hop, u_int8_t hops, u_int32_t dst_id,
 		struct net_device *dev, u_int32_t path_metric) {
-#ifdef DEBUG
+#ifdef DEBUG0
 	char src[16];
 	char dst[16];
 	char nex[16];
@@ -355,7 +355,7 @@ int rreq_aodv_route(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos,
 	tmp_route = find_aodv_route(src_ip, dst_ip, tos);
 	
 	 if (tmp_route == NULL) {
-#ifdef DEBUG
+#ifdef DEBUG0
 		printk ("Creating route, %s to %s VIA %s\n", src, dst, nex);
 #endif
 		//wujingbang
@@ -363,7 +363,7 @@ int rreq_aodv_route(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos,
 		tmp_route = create_aodv_route(src_ip, dst_ip, tos, dst_id);
 
 		if (tmp_route == NULL) {
-#ifdef DEBUG
+#ifdef DEBUG0
 			printk ("rreq_aodv_route: tem_route is STILL NULL!\n");
 #endif
 			return 0;
@@ -382,31 +382,45 @@ int rreq_aodv_route(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos,
 	}
 	 
 	 else { //Route exists!
-#ifdef DEBUG
-		printk ("We already have route, %s to %s \n", inet_ntoa(src_ip), inet_ntoa(dst_ip));
+#ifdef DEBUG0
+		strcpy(src, inet_ntoa(tmp_route->src_ip));
+		strcpy(dst, inet_ntoa(tmp_route->dst_ip));
+		strcpy(nex, inet_ntoa(tmp_route->next_hop));
+		printk ("We already have route, %s to %s, via %s \n", src, dst, nex);
 #endif
 	 	if (tmp_route->dst_id > dst_id) //older route
+		{
+#ifdef DEBUG0
+			printk(" tmp_route->dst_id > dst_id \n");
+#endif
 	 		return 0;
-
+		}
 	 	if ((dst_id == tmp_route->dst_id) && (path_metric
 	 					>= tmp_route->path_metric)) //worse metric
+		{
+#ifdef DEBUG0
+			printk(" worse metric \n");
+#endif
 	 		return 0;
-
-	 	tmp_src_entry = find_src_list_entry(src_ip);
+		}
+/*	 	tmp_src_entry = find_src_list_entry(src_ip);
 	 	if (tmp_src_entry == NULL) {
+#ifdef DEBUG0
+			printk(" tmp_src_entry == NULL \n");
+#endif
 	 		return 0;
 	 	}
-	 		
+*/	 		
 	 	previous_state = tmp_route->state;
 	 		
 	 	if (previous_state != INVALID){
-#ifdef DEBUG
+#ifdef DEBUG0
 		 	printk("Replacing Route\n");
 	#endif
 
 
 			
-			 error = rpdb_route(RTM_DELROUTE, tmp_src_entry->rt_table,
+			 error = rpdb_route(RTM_DELROUTE, /*tmp_src_entry->rt_table*/0,
 			 				tmp_route->tos, tmp_route->src_ip, tmp_route->dst_ip,
 			 				tmp_route->next_hop, tmp_route->dev->index,
 			 				tmp_route->num_hops);

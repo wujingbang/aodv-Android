@@ -44,9 +44,7 @@ int recv_rreq(task * tmp_packet) {
 	tmp_neigh = find_aodv_neigh(tmp_packet->src_ip);
 
 	if (tmp_neigh == NULL) {
-#ifdef DEBUG
 		printk("Ignoring RREQ received from unknown neighbor\n");
-#endif
 		return 1;
 	}
 
@@ -66,14 +64,12 @@ int recv_rreq(task * tmp_packet) {
 	}
 
 	if (g_aodv_gateway && tmp_rreq->dst_ip == g_null_ip && tmp_rreq->gateway != g_mesh_ip) {
-#ifdef DEBUG
 		printk("I'm not the gateway of this source - I cannot apply as an intermediate node to its default route\n");
-#endif
 		return 1;
 	}
 
 	tmp_rreq->num_hops++;
-/*
+
 	if (g_routing_metric == ETT) {
 		error = ett_metric(tmp_neigh, tmp_rreq);
 		if (error) {
@@ -93,7 +89,7 @@ int recv_rreq(task * tmp_packet) {
 			return 1;
 		}
 	} else
-*/
+
 		//number of hops
 		tmp_rreq->path_metric =tmp_rreq->num_hops;
 

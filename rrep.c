@@ -111,7 +111,7 @@ int recv_rrep(task * tmp_packet) {
 			para[3] = NULL;
 			//
 			send2dtn((void*)para,RE_DTN_HELLO);
-#ifdef CaiDebug
+#ifdef DEBUG0
 			printk("=========Tell the DTN aboout the neighbor info:%s,%d========\n",
 				inet_ntoa(tmp_rrep->dst_ip),tmp_rrep->x);
 #endif
@@ -277,16 +277,14 @@ int gen_rrep(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 	printk("I'm generating a new rrep, from %s to %s\n",src, dst);
 #endif
 	if ((tmp_rrep = (rrep *) kmalloc(sizeof(rrep), GFP_ATOMIC)) == NULL) {
-#ifdef DEBUG
 		printk("Can't allocate new rrep\n");
-#endif
 		return 0;
 	}
 
 	src_route = find_aodv_route(dst_ip, src_ip, tos);
 	/* Get the source and destination IP address from the RREQ */
 	if (!src_route) { //symmetric
-#ifdef DEBUG
+#ifdef DEBUG0
 			printk("RREP: No route to Source! src: %s\n", inet_ntoa(src_ip));
 #endif
 
@@ -295,9 +293,7 @@ int gen_rrep(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 
 
 	if ((tmp_rrep = (rrep *) kmalloc(sizeof(rrep), GFP_ATOMIC)) == NULL) {
-#ifdef DEBUG
 		printk("Can't allocate new rrep\n");
-#endif
 		return 0;
 	}
 
@@ -314,7 +310,7 @@ int gen_rrep(u_int32_t src_ip, u_int32_t dst_ip, unsigned char tos) {
 	aodv_route *new_route;
 	if(dtn_register){
 #ifdef CaiDebug
-	printk("The src ip is %s\n",inet_ntoa(src_ip));
+		printk("The src ip is %s\n",inet_ntoa(src_ip));
 #endif
 		if(dst_ip==dtn_hello_ip){//it's a dtn neighbor,gen "special rrep" for telling src
 			//change the dst_ip to local ip

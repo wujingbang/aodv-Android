@@ -264,9 +264,9 @@ int rpdb_route(unsigned char type, int rt_table, unsigned char tos,
 	req.rt.rtm_family = AF_INET;
 
 	//set the rt_table used and the ToS of the traffic
-	req.rt.rtm_table = (unsigned char)rt_table;
+//	req.rt.rtm_table = (unsigned char)rt_table;
 
-	req.rt.rtm_tos = tos;
+//	req.rt.rtm_tos = tos;
 
 	req.rt.rtm_protocol = RTPROT_STATIC;
 

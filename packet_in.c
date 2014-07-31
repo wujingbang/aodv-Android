@@ -253,7 +253,7 @@ unsigned int input_handler(unsigned int hooknum, struct sk_buff *skb,
 
 	}
 
-#ifdef DEBUG
+#ifdef DEBUG0
 	if (aodv_type != HELLO_MESSAGE)
 		printk("input_handler: input without process.\n");
 #endif
