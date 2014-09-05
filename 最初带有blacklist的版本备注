@@ -1,0 +1,6 @@
+下载10 Apr的版本：
+commit代号：5b7f8c01aa99e5a0f8958d3f741a2b863beb2117
+
+下载该版本后，在aodv.h里面添加一句:
+  #define BLACKLIST               111
+即可完成有黑名单的初始aodv
