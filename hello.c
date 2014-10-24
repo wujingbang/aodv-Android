@@ -92,11 +92,17 @@ int send_hello(helloext_struct *total_ext, int num_neigh) {
 
 	tmp_hello = (hello *) data;
 	tmp_hello->type = HELLO_MESSAGE;
+#ifdef DEBUGC
+	extern g_node_name;
+	tmp_hello->nodename = g_node_name;
+#endif
 	tmp_hello->reserved1 = 0;
 	tmp_hello->num_hops = 0;
 	tmp_hello->neigh_count = num_neigh;
 	tmp_hello->load = g_mesh_dev->load;
 	tmp_hello->load_seq = g_mesh_dev->load_seq;
+	
+
 
 	tmp_hello_extension = (hello_extension *) ((void *)data + sizeof(hello));
 	while (tmp_helloext_struct) {
@@ -193,10 +199,15 @@ int recv_hello(task * tmp_packet) {
 					inet_ntoa(tmp_packet->src_ip));
 
 		} else
-			printk("NEW NEIGHBOR_1HOP DETECTED: %s\n",
-					inet_ntoa(tmp_packet->src_ip));
+		{
+			char neigh_name[20];
+			strcpy(neigh_name,inet_ntoa(tmp_hello->nodename));
+			printk("\nNEW NEIGHBOR_1HOP DETECTED:%s : %s\n",
+					neigh_name,inet_ntoa(tmp_packet->src_ip));
+		}
 
-		hello_orig = create_aodv_neigh(tmp_packet->src_ip);
+		hello_orig = create_aodv_neigh(tmp_hello->nodename,tmp_packet->src_ip);
+
 		if (!hello_orig) {
 #ifdef DEBUG
 			printk("Error creating neighbor: %s\n", inet_ntoa(tmp_packet->src_ip));

@@ -1,1 +1,14 @@
-具备RCVP，RRDP，DTN HELLO，并修正了src list误删除本地节点相关entry问题。
+try to get all devs and set up a dev list--just contains the eth* and adhoc0
+
+modified the data structure of aodv_dev in adov.h:add next ptr
+get all devs in fbaodv_protocol.c
+change init aodv dev to init wireless & wired dev use init_net_dev,create_net_dev,insert_net_dev
+and add a var called net_dev_list---contain all devs
+
+modified the data structure of aodv_dev in adov.h:add nodename
+
+modified local_broadcast in socket.c
+broadcast wireless and wired
+the g_local_route is binding to the first inited dev
+
+

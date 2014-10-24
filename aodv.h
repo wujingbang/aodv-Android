@@ -45,6 +45,7 @@
 #include <linux/netfilter_ipv4.h>
 #include <linux/netfilter_ipv4/ip_tables.h>
 #include <net/netfilter/nf_queue.h>
+#include <linux/netdevice.h>
 
 #include <linux/spinlock.h>
 #include <linux/sysctl.h>
@@ -76,7 +77,8 @@
 #define RECOVERYPATH 
 #define DTN
 //#define DEBUG
-//#define CaiDebug
+#define CaiDebug
+#define DEBUGC
 //#define DEBUG0
 #define extention               667
 #define DTNREGISTER		9999
@@ -393,6 +395,10 @@ typedef struct {
 #else
 	//#error "Please fix <asm/byteorder.h>"
 #endif
+
+#ifdef DEBUGC
+	u_int32_t nodename;
+#endif
 	u_int8_t neigh_count;
 	u_int8_t num_hops;
 	u_int8_t reserved2;
@@ -610,6 +616,7 @@ struct _aodv_dev {
 	struct socket *sock;
 	u_int16_t load_seq;
 	u_int8_t load;
+	struct _aodv_dev *next;
 };
 typedef struct _aodv_dev aodv_dev;
 //
@@ -652,6 +659,9 @@ typedef struct _load_params{
 
 //AODV_NEIGH
 struct _aodv_neigh {
+#ifdef DEBUGC
+	u_int32_t neigh_name; 
+#endif
 	u_int32_t ip;
 	u_int64_t lifetime;
 	struct net_device *dev;

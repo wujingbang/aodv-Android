@@ -77,7 +77,12 @@ METRIC="routing_metric=HOPS"
 RATE="nominal_rate=60"
 echo "1" > /proc/sys/net/ipv4/ip_forward
 echo "Running AODV-MCC"
-rmmod fbaodv_intel
+rmmod fbaodv_panda
+echo "clean log!"
+echo > /system/log
 if [ $adhoc0_join -eq 1 ];then
-	insmod fbaodv_intel.ko $MESH_DEV $AODV_NET $METRIC $RATE $GATEWAY
+	insmod /system/fbaodv_panda.ko $MESH_DEV $AODV_NET $METRIC $RATE $GATEWAY aodv_blacklist="192.168.1.12" dtn_blacklist="192.168.1.12"
 fi
+
+echo "change iSerial"
+echo -n pan-$IP > /sys/class/android_usb/android0/iSerial

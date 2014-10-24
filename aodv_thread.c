@@ -81,7 +81,6 @@ void aodv(void) {
 			goto exit;
 		}
 		//While the buffer is not empty
-		extern dtn_hello_ip;
 		while ((tmp_task = get_task()) != NULL) {
 			
 			u_int32_t dst;
@@ -91,10 +90,9 @@ void aodv(void) {
 
 			//remove following case when DTN hell test end
 			case TASK_DTN_HELLO:
-				//inet_aton("127.127.127.127",&dst);
-				
+				inet_aton("127.127.127.127",&dst);
 				//extern u_int32_t dtn_hello_ip;
-				gen_rreq(g_mesh_ip,dtn_hello_ip,tmp_task->tos);
+				gen_rreq(g_mesh_ip,dst,tmp_task->tos);
 #ifdef CaiDebug
 				printk("-------DTN HELLO TASK---------\n");
 #endif

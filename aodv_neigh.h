@@ -25,7 +25,8 @@ int read_ett_list_proc(char *buffer, char **buffer_location, off_t offset,
 int read_node_load_proc(char *buffer, char **buffer_location, off_t offset,
 		int buffer_length, int *eof, void *data);
 aodv_neigh *first_aodv_neigh(void);
-aodv_neigh *create_aodv_neigh(u_int32_t ip);
+//aodv_neigh *create_aodv_neigh(u_int32_t ip);
+aodv_neigh *create_aodv_neigh(u_int32_t neigh_name,u_int32_t ip);
 int delete_aodv_neigh(u_int32_t ip);
 int route_aodv_neigh( u_int32_t ip);
 void cleanup_neigh_routes(void);

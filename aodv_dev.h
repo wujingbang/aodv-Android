@@ -27,6 +27,7 @@
 int init_aodv_dev(char *name);
 aodv_dev *find_aodv_dev_by_dev(struct net_device *dev);
 void free_dev(void);
+int init_net_dev(char *name);
 
 
 #endif

@@ -1,0 +1,104 @@
+aodv_dev *create_eth_dev(struct net_device *dev) {
+	int error;
+	aodv_dev *new_dev  = NULL;
+	src_list_entry *tmp_src_entry = NULL;
+	struct in_device *ip;
+	struct in_ifaddr *ifaddr;
+
+	if ((new_dev = (aodv_dev *) kmalloc(sizeof(aodv_dev), GFP_ATOMIC)) == NULL) {
+		/* Couldn't create a new entry in the routing table */
+		printk("Not enough memory to create Route Table Entry\n");
+		return NULL;
+	}
+	
+	strncpy(new_dev->name, dev->name, IFNAMSIZ);
+	ip = dev->ip_ptr;
+	ifaddr = ip->ifa_list;
+	new_dev->ip = ifaddr->ifa_address; //g_mesh_ip;
+	new_dev->netmask = ifaddr->ifa_mask; //g_mesh_netmask;
+	new_dev->dev = dev;
+	new_dev->load = 0;
+	new_dev->load_seq = 1;
+	
+
+	new_dev->index= dev->ifindex;
+	
+	tmp_src_entry = insert_src_list_entry(new_dev->ip);
+	if (tmp_src_entry == NULL) {
+		kfree(new_dev);
+		return NULL;
+	}
+		
+	error = rpdb_route(RTM_NEWROUTE, tmp_src_entry->rt_table, g_local_route->tos,
+			new_dev->ip, new_dev->ip, new_dev->ip,
+			new_dev->index, 0);
+
+	if (error < 0) {
+		printk(
+				"Error sending with rtnetlink - Insert Route - err no: %d,on interface: %s\n",
+				error, new_dev->name);
+		kfree(new_dev);
+		return NULL;
+	}
+	//}
+	return new_dev;
+
+}
+
+int insert_eth_dev(struct net_device *dev) {
+	aodv_dev *new_dev;
+	extern aodv_dev *g_eth_dev;
+	int error=0;
+
+	char netmask[16];
+
+	new_dev = create_eth_dev(dev);
+	if (new_dev == NULL){
+		printk("Error during creation of socket; terminating, %d\n", error);
+		return 1;
+	}
+	strcpy(netmask, inet_ntoa(new_dev->netmask & new_dev->ip));
+
+	printk(
+			"Adding interface: %s  Interface Index: %d  IP: %s Subnet: %s\n",
+			dev->name, dev->ifindex, inet_ntoa(new_dev->ip), netmask);
+		                                 
+		error = sock_create(PF_INET, SOCK_DGRAM, 0, &(new_dev->sock));
+		if (error < 0) {
+			kfree(new_dev);
+			printk("Error during creation of socket; terminating, %d\n", error);
+			return 1;
+		}
+		init_sock(new_dev->sock, new_dev->ip, dev->name);
+	
+	g_eth_dev = new_dev;
+	printk("---insert_eth_dev in socket:%s-----\n",g_eth_dev->name);
+	return 0;
+}
+
+//extern u_int8_t g_aodv_gateway;
+
+int init_eth_dev(char *name) {
+
+	struct net_device *dev;
+	struct in_device *tmp_indev;
+	int error = 0;
+
+	dev = dev_get_by_name(&init_net,name); //using device name passed in module intialization
+		
+	if (dev != NULL) {
+		//Checking if g_mesh_ip and g_mesh_netmask are correct!
+		tmp_indev = (struct in_device *) dev->ip_ptr;
+		if (tmp_indev && (tmp_indev->ifa_list != NULL)) {
+			error = insert_eth_dev(dev);
+			dev_put(dev); //free the device!!
+				return error;
+		}
+		dev_put(dev); //free the device!!
+	}
+	
+	printk("\n\nDEVICE ERROR! Unable to locate device: %s, Bailing!\n\n", name);
+	return 1;
+
+}
+

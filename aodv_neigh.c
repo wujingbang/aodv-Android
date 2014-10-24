@@ -97,7 +97,7 @@ int delete_aodv_neigh(u_int32_t ip) {
 			}
 
 			neigh_write_unlock();
-	
+
 			if (g_routing_metric != HOPS){ //deleting timers...
 				delete_timer(ip, ip, NO_TOS, TASK_SEND_ETT);
 				delete_timer(ip, ip, NO_TOS, TASK_ETT_CLEANUP);
@@ -107,6 +107,8 @@ int delete_aodv_neigh(u_int32_t ip) {
 			printk("deleting reliability and ett info for neighbor - %s\n",
 					inet_ntoa(ip));
 #endif
+
+
 
 /** Cai:Del the following codes because they remove the route entry in kernel before
   * managing the broken link. We should genarate rerr and send it out first,then just
@@ -178,7 +180,7 @@ void cleanup_neigh_routes() {
 	}
 }
 
-aodv_neigh *create_aodv_neigh(u_int32_t ip) {
+aodv_neigh *create_aodv_neigh(u_int32_t neigh_name,u_int32_t ip) {
 	aodv_neigh *new_neigh;
 	aodv_neigh *prev_neigh = NULL;
 	aodv_neigh *tmp_neigh = NULL;
@@ -216,7 +218,9 @@ aodv_neigh *create_aodv_neigh(u_int32_t ip) {
 	}
 			
 	neigh_write_lock(); //to avoid conflicts with read_neigh_proc and packet_out.c (uncontrolled interruption)
-
+#ifdef DEBUGC
+	new_neigh->neigh_name = neigh_name;
+#endif
 	new_neigh->ip = ip;
 	new_neigh->lifetime = 0;
 	new_neigh->etx_metric = new_neigh->recv_rate = 0; 
@@ -224,6 +228,7 @@ aodv_neigh *create_aodv_neigh(u_int32_t ip) {
 	new_neigh->dev = g_mesh_dev->dev;
 	new_neigh->next = NULL;
 	
+
 	//ETX metric initialization
 	new_neigh->etx.count=0;
 	new_neigh->etx.send_etx=0;
@@ -247,6 +252,7 @@ aodv_neigh *create_aodv_neigh(u_int32_t ip) {
 	for (i=0;i<NEIGH_TABLESIZE; i++)
 		new_neigh->load_metric.neigh_tx[i] = 0;
 
+
 	if (prev_neigh == NULL) {
 		new_neigh->next = aodv_neigh_list;
 		aodv_neigh_list = new_neigh;
@@ -264,6 +270,7 @@ aodv_neigh *create_aodv_neigh(u_int32_t ip) {
 		insert_timer_simple(TASK_ETT_CLEANUP, ETT_INTERVAL * (1 + ALLOWED_ETT_LOSS) + 100,ip);
 		update_timer_queue();
 	}
+
 	
 	return new_neigh;
 }

@@ -140,6 +140,36 @@ int packet_in(struct sk_buff *packet, struct timeval tv) {
     if( aodv_type == RCVP_MESSAGE)
         printk("It's a rcvp message\n");
 #endif
+
+/*#ifdef DEBUGC
+char name[30];
+unsigned char if_port;
+int ifindex;
+unsigned short type;
+unsigned short dev_id;
+if(aodv_type != HELLO_MESSAGE){
+struct net_device *dev = packet->dev;
+strcpy(name,dev->name);
+if_port = dev->if_port;
+ifindex = dev->ifindex;
+type = dev->type;
+dev_id = dev->dev_id;
+char port[20];
+switch(if_port){
+	case IF_PORT_UNKNOWN:strcpy(port,"UNKNOWN");break;
+	case IF_PORT_10BASE2:strcpy(port,"10BASE2");break;
+	case IF_PORT_10BASET:strcpy(port,"10BASET");break;
+	case IF_PORT_AUI:strcpy(port,"AUI");break;
+        case IF_PORT_100BASET:strcpy(port,"100BASET");break;
+        case IF_PORT_100BASETX:strcpy(port,"100BASETX");break;
+        case IF_PORT_100BASEFX:strcpy(port,"100BASEFX");break;
+}
+printk("------------------------------------\ndev->name:%s\ndev->ifindex:%d\ndev->type:%d\ndev->dev_id:%d\ndev->if_port:%s\n----------------------------------\n",name,ifindex,type,dev_id,port);
+}
+
+#endif
+*/
+
 #ifdef DEBUG
 	if ( aodv_type != HELLO_MESSAGE )
 		printk("packet_in: type: %d and of size %u from: %s\n", aodv_type, packet->len - start_point, inet_ntoa(ip->saddr));
@@ -219,7 +249,7 @@ unsigned int input_handler(unsigned int hooknum, struct sk_buff *skb,
 		u_int32_t x = ((u_int32_t *)skb->data)[2];
 		u_int32_t y = ((u_int32_t *)skb->data)[3];*/
 #ifdef CaiDebug
-		printk("*********GOT Location Info%s  %ld  %ld**********\n",inet_ntoa(src_ip),ntohl(x),ntohl(y));	
+		printk("*********GOT Location Info%s  %ld  %ld**********\n",inet_ntoa(src_ip),ntohl(x),ntohl(y));
 #endif
 		//gen_rrep(src_ip,dtn_hello_ip,(unsigned char)tos);
 		insert_timer_directional(TASK_SEND_RREP, RREP_TIMER, 0,
@@ -238,6 +268,33 @@ unsigned int input_handler(unsigned int hooknum, struct sk_buff *skb,
 #endif
 
 #endif
+#ifdef DEBUGC
+char name[30];
+unsigned char if_port;
+int ifindex;
+unsigned short type;
+unsigned short dev_id;
+struct net_device *dev = skb->dev;
+if( (strcmp(dev->name,"lo")!=0) && (aodv_type != HELLO_MESSAGE)){
+
+strcpy(name,dev->name);
+if_port = dev->if_port;
+ifindex = dev->ifindex;
+type = dev->type;
+dev_id = dev->dev_id;
+char port[20];
+switch(if_port){
+	case IF_PORT_UNKNOWN:strcpy(port,"UNKNOWN");break;
+	case IF_PORT_10BASE2:strcpy(port,"10BASE2");break;
+	case IF_PORT_10BASET:strcpy(port,"10BASET");break;
+	case IF_PORT_AUI:strcpy(port,"AUI");break;
+        case IF_PORT_100BASET:strcpy(port,"100BASET");break;
+        case IF_PORT_100BASETX:strcpy(port,"100BASETX");break;
+        case IF_PORT_100BASEFX:strcpy(port,"100BASEFX");break;
+}
+printk("------------------------------------\ndev->name:%s\ndev->ifindex:%d\ndev->type:%d\ndev->dev_id:%d\ndev->if_port:%s\n----------------------------------\n",name,ifindex,type,dev_id,port);
+}
+#endif
 
 #ifdef DEBUG
 	if (ip->protocol == IPPROTO_ICMP) {
@@ -253,7 +310,7 @@ unsigned int input_handler(unsigned int hooknum, struct sk_buff *skb,
 
 	}
 
-#ifdef DEBUG0
+#ifdef DEBUG
 	if (aodv_type != HELLO_MESSAGE)
 		printk("input_handler: input without process.\n");
 #endif

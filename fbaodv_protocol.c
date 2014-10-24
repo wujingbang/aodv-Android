@@ -20,6 +20,14 @@ u_int8_t g_aodv_gateway;
 u_int8_t g_routing_metric;
 u_int32_t g_fixed_rate;
 
+#ifdef DEBUGC
+u_int32_t g_node_name;
+#endif
+
+//#ifdef DEBUGC
+//struct aodv_dev *g_eth_dev;
+//#endif
+
 ////////////////////
 //dtn hello ip
 #ifdef DTN_HELLO
@@ -50,6 +58,8 @@ char *network_ip;
 unsigned int aodv_gateway;
 char g_aodv_dev[8];
 u_int32_t g_null_ip;
+int node_type;//wireless=0,wired=1,IMN=2
+int dev_num;
 
 #ifdef BLACKLIST
 	char * aodv_blacklist[10];
@@ -130,39 +140,7 @@ static int __init init_fbaodv_module(void) {
 		g_routing_metric = HOPS;
 		printk("Hop count routing\n\n");
 	}
-
-	else if (strcmp(routing_metric, "ETT") == 0) {
-		g_routing_metric = ETT;
-		printk("ETT routing: Expected Transmission Time\n\n");
-		
-		if (nominal_rate && get_nominalrate(nominal_rate))
-			g_fixed_rate = nominal_rate;
-		
-		if (!nominal_rate || g_fixed_rate == 0) {
-				g_fixed_rate = 0;
-				printk("Nominal rate estimation using packet-pair probe messages: ACTIVE\n\n");
-		}
-		else
-			printk("Nominal rate estimation using packet-pair probe messages: INACTIVE\n\n");
-
-	}
-	else if (strcmp(routing_metric, "WCIM") == 0) {
-		g_routing_metric = WCIM;
-		printk("WCIM routing: Weighted Contention and Interference Model\n\n");
-		
-		if (nominal_rate && get_nominalrate(nominal_rate))
-					g_fixed_rate = nominal_rate;
-				
-		if (!nominal_rate || g_fixed_rate == 0) {
-					g_fixed_rate = 0;
-					printk("Nominal rate estimation using packet-pair probe messages: ACTIVE\n\n");
-		}
-		else
-					printk("Nominal rate estimation using packet-pair probe messages: INACTIVE\n\n");
-
-
-	}
-
+	//delete the metrics of ETT & WCIM
 	
 	if (network_ip!=NULL)
 	{
@@ -218,13 +196,63 @@ static int __init init_fbaodv_module(void) {
 	init_gw_list();
 	init_flow_type_table();
 
+
 	printk("\n*Initialicing mesh device  - %s\n", mesh_dev);	
-	if (init_aodv_dev(mesh_dev))
-		goto out1;
-	
+	extern aodv_dev* net_dev_list;
+	net_dev_list = NULL;
+	dev_num = 0;
+	//if (init_aodv_dev(mesh_dev))
+//	if(init_net_dev(mesh_dev))
+//		goto out1;
+//printk("---------------init adhoc0-------------------\n");
 
+//#ifdef DEBUGC
+     //try to get net list when initialling.
+	struct net_device *pdev;
+	struct list_head *dev_base = &(init_net.dev_base_head);
+	//struct list_head *phead;
+	struct in_device *ip;
+	struct in_ifaddr *ifaddr;
+	//int i ;
+	list_for_each_entry(pdev,dev_base,dev_list)//list_for_each(phead,&dev_base)
+	{
+		if( ((pdev->name[0]=='e')&&(pdev->name[1]=='t')&&(pdev->name[2]=='h')) ||
+			(strcmp(pdev->name,"adhoc0")==0) )
+		{
+			char dev_name[IFNAMSIZ];
+			strcpy(dev_name,pdev->name);
+			if(init_net_dev(dev_name))
+				continue;
+			dev_num ++;
+			printk("------------------------------------\ndev->name:%s\ndev->ifindex:%d\ndev->type:%d\ndev->dev_id:%d\n----------------------------------\n",pdev->name,pdev->ifindex,pdev->type,pdev->dev_id);
+			
+			
+		}
+
+		/*
+		//i =0;
+		ip = pdev->ip_ptr;
+		ifaddr = ip->ifa_list;
+		while(ifaddr){
+			printk("-------ip:%s---------\n",inet_ntoa(ifaddr->ifa_address));
+			ifaddr = ifaddr->ifa_next;
+		//	printk("=========iiiiiii:%d========\n",i++);
+		}
+		//printk("ip:%s\n",inet_ntoa(ip->ifa_list->ifa_address));
+		
+		if(strcmp(pdev->name,"eth0")==0){
+			char eth_dev[8];
+			printk("=========iiiiiii========\n");
+			strcpy(eth_dev,pdev->name);
+			printk("=========istgreii========\n");
+			init_eth_dev(eth_dev);
+		}
+		*/
+	}
+
+
+//#endif
 	startup_aodv();
-
 
 	if (g_aodv_gateway) {
 		printk("initiating st_rreq dissemination\n");

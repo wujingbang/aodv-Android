@@ -94,7 +94,12 @@ int local_broadcast(u_int8_t ttl, void *data,const size_t datalen)
     msg.msg_iov->iov_len = (__kernel_size_t) datalen;
     msg.msg_iov->iov_base = (char *) data;
 
-    tmp_dev = g_mesh_dev;
+    //tmp_dev = g_mesh_dev;
+	extern aodv_dev* net_dev_list;
+	tmp_dev = net_dev_list;
+	
+
+    while(tmp_dev){
 
     if ((tmp_dev) && (tmp_dev->sock) && (sock_wspace(tmp_dev->sock->sk) >= datalen))
     {
@@ -115,7 +120,10 @@ int local_broadcast(u_int8_t ttl, void *data,const size_t datalen)
         if (len < 0)
             printk("Error sending! err no: %d,on interface: %s\n", len, tmp_dev->dev->name);
         set_fs(oldfs);
-   }
+
+	tmp_dev = tmp_dev->next;
+   }//endif
+   }//endwhile
 
     return len;
 }
@@ -292,6 +300,7 @@ int send2dtn(void * data,unsigned short port){
     msg.msg_name = (void *) &(sin);
     msg.msg_namelen = sizeof(sin);
     msg.msg_iov = &iov;
+
 
     msg.msg_iovlen = 1;
     msg.msg_control = NULL;
